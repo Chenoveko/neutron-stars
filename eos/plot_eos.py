@@ -1,60 +1,57 @@
-import numpy as np
+# =====================
+# Imports
+# =====================
 import matplotlib.pyplot as plt
+from numpy import log10
 
-# Array de numpy de los datos
-akmalpr = np.loadtxt("eos_akmalpr.txt", comments="#")
-glendnh3 = np.loadtxt("eos_glendnh3.txt", comments="#")
-sly4 = np.loadtxt("eos_sly4.txt", comments="#")
+from utilities.extract_data_eos import extract_mass_density_from_eos_txt, extract_pressure_from_eos_txt
 
-# Slicing para sacar 2º y 3º columna (p y rho respectivamente)
-p_akmalpr = akmalpr[:,3]
-rho_akmalpr = akmalpr[:,2]
+"""
+Equations of Structure (EoS)
+-----------------------------------------
+- SLy4 - ’Skryme Lyon’
+- APR4 - A. Akmal, V. R. Pandharipande, D.G. Ravenhall
+- GNH3 - N. K. Glendenning.
 
-p_glendnh3 = glendnh3[:,3]
-rho_glendnh3 = glendnh3[:,2]
 
-p_sly4 = sly4[:,3]
-rho_sly4 = sly4[:,2]
+From:
+    Akmal, A., V. R. Pandharipande y D. G. Ravenhall (1998). “Equation of state of nucleon
+    matter and neutron star structure”. Physical Review C 58.3, p ags. 1804-1828
 
-# Logaritmos base 10
-logp_akmalpr = np.log10(p_akmalpr)
-logrho_akmalpr = np.log10(rho_akmalpr)
+Units:
+    n_B [fm^{-3}]  rho [g/cm^3]   p [dyn/cm^2]
+"""
+# Mass density from Eos on log10
+log10_rho_akmalpr = log10(extract_mass_density_from_eos_txt("eos_akmalpr.txt"))
+log10_rho_glendnh3 = log10(extract_mass_density_from_eos_txt("eos_glendnh3.txt"))
+log10_rho_sly4 = log10(extract_mass_density_from_eos_txt("eos_sly4.txt"))
+# Pressure from EoS on log10
+log10_p_akmalpr = log10(extract_pressure_from_eos_txt("eos_akmalpr.txt"))
+log10_p_glendnh3 = log10(extract_pressure_from_eos_txt("eos_glendnh3.txt"))
+log10_p_sly4 = log10(extract_pressure_from_eos_txt("eos_sly4.txt"))
 
-logp_glendnh3 = np.log10(p_glendnh3)
-logrho_glendnh3 = np.log10(rho_glendnh3)
-
-logp_sly4 = np.log10(p_sly4)
-logrho_sly4 = np.log10(rho_sly4)
-
-# Gráfica de las 3 EOS
-plt.figure()
-
-plt.plot(logp_glendnh3, logrho_glendnh3, label="Glendenning NH3")
-plt.plot(logp_sly4, logrho_sly4, label="SLy4")
-plt.plot(logp_akmalpr, logrho_akmalpr, label="APR")
-
-plt.xlabel(r'$\log_{10}(p)$')
-plt.ylabel(r'$\log_{10}(\rho)$')
-
-plt.grid(True,alpha=0.3)
-plt.legend()
-plt.tight_layout()
+# Plot of EoS, log10(mass density) vs log10(pressure)
+fig, ax = plt.subplots(figsize=(7.5, 4.5))
+ax.plot(log10_p_akmalpr, log10_rho_akmalpr, color='goldenrod', linewidth=1.5, label="APR")
+ax.plot(log10_p_glendnh3, log10_rho_glendnh3, color='blue', linewidth=1.5, label="Glendenning NH3")
+ax.plot(log10_p_sly4, log10_rho_sly4, color='red', linewidth=1.5, label="SLy4")
+ax.set_xlabel(r'$\log_{10}(p)$')
+ax.set_ylabel(r'$\log_{10}(\rho)$')
+ax.set_title(r'EoS Profile')
+ax.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax.legend()
 plt.show()
 
-# Gráfica con ampliación de las 3 EOS (log p > 31)
-plt.figure()
-
-plt.plot(logp_glendnh3, logrho_glendnh3, label="Glendenning NH3")
-plt.plot(logp_sly4, logrho_sly4, label="SLy4")
-plt.plot(logp_akmalpr, logrho_akmalpr, label="APR")
-
-plt.xlabel(r'$\log_{10}(p)$')
-plt.ylabel(r'$\log_{10}(\rho)$')
-
-plt.xlim(31.7, 36.8)
-plt.ylim(13, 16)
-
-plt.grid(True,alpha=0.3)
-plt.legend()
-plt.tight_layout()
+# Zoom from previous plot
+fig_zoom, ax_zoom = plt.subplots(figsize=(7.5, 4.5))
+ax_zoom.plot(log10_p_akmalpr, log10_rho_akmalpr, color='goldenrod', linewidth=1.5, label="APR")
+ax_zoom.plot(log10_p_glendnh3, log10_rho_glendnh3, color='blue', linewidth=1.5, label="Glendenning NH3")
+ax_zoom.plot(log10_p_sly4, log10_rho_sly4, color='red', linewidth=1.5, label="SLy4")
+ax_zoom.set_xlabel(r'$\log_{10}(p)$')
+ax_zoom.set_ylabel(r'$\log_{10}(\rho)$')
+ax_zoom.set_title(r'EoS Zoom Profile')
+ax_zoom.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_zoom.legend()
+ax_zoom.set_xlim(xmin=32, xmax=36.7)
+ax_zoom.set_ylim(ymin=13.5, ymax=15.8)
 plt.show()

@@ -15,6 +15,8 @@ From:
 Units:
     Geometrized units in CGS
 """
+
+
 def tov_equations(y, r, rho):
     """
     :param y: state variables
@@ -32,6 +34,7 @@ def tov_equations(y, r, rho):
             (r ** 2 * (1.0 - 2.0 * m / r))
     return array([dm_dr, dp_dr], float)
 
+
 """
 Tolman–Oppenheimer–Volkoff (TOV) Equations, Schwarzschild interior
 solution.
@@ -45,7 +48,9 @@ From:
 Units:
     Geometrized units in CGS
 """
-def schwarzschild_solution(r:ndarray, M:float, R:float):
+
+
+def schwarzschild_solution(r: ndarray, M: float, R: float):
     """
     :param r: radial coordinate
     :param M: total mass
@@ -56,12 +61,12 @@ def schwarzschild_solution(r:ndarray, M:float, R:float):
         raise ValueError("Schwarzschild interior solution requires M/R < 4/9")
 
     # Uniform energy density
-    rho = 3*M/(4*pi*R**3)
+    rho = 3 * M / (4 * pi * R ** 3)
     # Interior pressure
     p = rho * (
             (sqrt(1 - 2 * M * r ** 2 / R ** 3) - sqrt(1 - 2 * M / R)) /
             (3 * sqrt(1 - 2 * M / R) - sqrt(1 - 2 * M * r ** 2 / R ** 3))
     )
     # Enclosed mass
-    m = (4.0/3.0) * pi * rho * r**3
+    m = (4.0 / 3.0) * pi * rho * r ** 3
     return array([p, m], float)
