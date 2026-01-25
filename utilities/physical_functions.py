@@ -17,7 +17,7 @@ Units:
 """
 
 
-def tov_equations(y, r, rho):
+def tov_equations(y: ndarray, r: ndarray, rho: ndarray) -> ndarray:
     """
     :param y: state variables
     :param r: radial coordinate
@@ -26,9 +26,9 @@ def tov_equations(y, r, rho):
     """
     # Unpack variables
     m, p = y
-    # Mass equation
+    # Enclosed mass equation
     dm_dr = 4.0 * pi * r ** 2 * rho
-    # Pressure equation
+    # Interior pressure equation
     dp_dr = -1 * (rho + p) * \
             (m + 4.0 * pi * r ** 3 * p) * \
             (r ** 2 * (1.0 - 2.0 * m / r))
@@ -50,7 +50,7 @@ Units:
 """
 
 
-def schwarzschild_solution(r: ndarray, M: float, R: float):
+def schwarzschild_solution(r: ndarray, M: float, R: float) -> ndarray:
     """
     :param r: radial coordinate
     :param M: total mass
