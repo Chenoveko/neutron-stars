@@ -4,15 +4,14 @@
 import matplotlib.pyplot as plt
 from numpy import log10
 
-from utilities.extract_data_eos import extract_mass_density_from_eos_txt, extract_pressure_from_eos_txt
+from eos.extract_data import extract_mass_density_from_eos_txt, extract_pressure_from_eos_txt
 
 """
 Equations of Structure (EoS)
 -----------------------------------------
-- SLy4 - ’Skryme Lyon’
 - APR4 - A. Akmal, V. R. Pandharipande, D.G. Ravenhall
 - GNH3 - N. K. Glendenning.
-
+- SLy4 - ’Skryme Lyon’
 
 From:
     Akmal, A., V. R. Pandharipande y D. G. Ravenhall (1998). “Equation of state of nucleon
@@ -39,8 +38,7 @@ ax.set_xlabel(r'$\log_{10}(p)$')
 ax.set_ylabel(r'$\log_{10}(\rho)$')
 ax.set_title(r'EoS Profile')
 ax.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
-ax.legend()
-plt.show()
+ax.legend(loc="upper left")
 
 # Zoom from previous plot
 fig_zoom, ax_zoom = plt.subplots(figsize=(7.5, 4.5))
@@ -51,7 +49,7 @@ ax_zoom.set_xlabel(r'$\log_{10}(p)$')
 ax_zoom.set_ylabel(r'$\log_{10}(\rho)$')
 ax_zoom.set_title(r'EoS Zoom Profile')
 ax_zoom.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
-ax_zoom.legend()
+ax_zoom.legend(loc="upper left")
 ax_zoom.set_xlim(xmin=32, xmax=36.7)
 ax_zoom.set_ylim(ymin=13.5, ymax=15.8)
 plt.show()

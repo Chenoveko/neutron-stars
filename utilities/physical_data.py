@@ -71,21 +71,6 @@ def mass_geo_to_cgs(m_geo):
 
 
 # -----------------------------
-#  Mass Density  (CGS <-> geometric)
-# -----------------------------
-def mass_density_cgs_to_geo(rho_cgs):
-    rho_cgs = _arr(rho_cgs)
-    rho_geo = (G / c ** 2) * rho_cgs
-    return rho_geo
-
-
-def mass_density_geo_to_cgs(rho_geo):
-    rho_geo = _arr(rho_geo)
-    rho_cgs = (c ** 2 / G) * rho_geo
-    return rho_cgs
-
-
-# -----------------------------
 # Pressure  (CGS <-> geometric)
 # -----------------------------
 def pressure_cgs_to_geo(p_cgs):
@@ -103,13 +88,13 @@ def pressure_geo_to_cgs(p_geo):
 # -----------------------------
 # Energy density  (CGS <-> geometric)
 # -----------------------------
-def energy_density_cgs_to_geo(erg_cgs):
-    erg_cgs = _arr(erg_cgs)
-    erg_geo = (G / c ** 4) * erg_cgs
-    return erg_geo
+def energy_density_cgs_to_geo(rho_cgs):
+    rho_cgs = _arr(rho_cgs)
+    rho_geo = (G / c ** 4) * rho_cgs
+    return rho_geo
 
 
-def energy_density_geo_to_cgs(erg_geo):
-    erg_geo = _arr(erg_geo)
-    erg_cgs = (c ** 4 / G) * erg_geo
-    return erg_cgs
+def energy_density_geo_to_cgs(rho_geo):
+    rho_geo = _arr(rho_geo)
+    rho_cgs = (c ** 4 / G) * rho_geo
+    return rho_cgs

@@ -1,10 +1,10 @@
 # =====================
 # Imports
 # =====================
-from numpy import pi, sqrt, array, ndarray
+from numpy import pi, sqrt, array, ndarray, linspace
 
 """
-Tolman–Oppenheimer–Volkoff (TOV) Equations
+Tolman–Oppenheimer–Volkoff (TOV) Equations.
 -----------------------------------------
 Equations of structure for spherically symmetric relativistic stars.
 
@@ -17,27 +17,25 @@ Units:
 """
 
 
-def tov_equations(y: ndarray, r: ndarray, rho: ndarray) -> ndarray:
+def tov_equations(var: ndarray, r: float, rho: float) -> ndarray:
     """
-    :param y: state variables
+    TOV equations in GEO units
+    :param var: state variables
     :param r: radial coordinate
     :param rho: energy density
     :return: derivatives
     """
     # Unpack variables
-    m, p = y
+    p, m = var
+    # Interior pressure equation
+    dp_dr = - (rho + p) * (m + 4 * pi * r ** 3 * p) / (r * (r - 2 * m))
     # Enclosed mass equation
     dm_dr = 4.0 * pi * r ** 2 * rho
-    # Interior pressure equation
-    dp_dr = -1 * (rho + p) * \
-            (m + 4.0 * pi * r ** 3 * p) * \
-            (r ** 2 * (1.0 - 2.0 * m / r))
-    return array([dm_dr, dp_dr], float)
+    return array([dp_dr, dm_dr], float)
 
 
 """
-Tolman–Oppenheimer–Volkoff (TOV) Equations, Schwarzschild interior
-solution.
+Tolman–Oppenheimer–Volkoff (TOV) Equations, Schwarzschild interior solution.
 -----------------------------------------
 Interior solution for spherically symmetric relativistic stars with uniform-density.
 
