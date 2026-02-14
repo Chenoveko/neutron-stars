@@ -4,7 +4,7 @@
 import matplotlib.pyplot as plt
 from numpy import linspace
 
-from utilities.math_methods import rk4_schwarzschild_solution
+from utilities.math_methods import solve_tov_schwarzschild
 from utilities.physical_data import mass_cgs_to_geo, pressure_geo_to_cgs, M_sun
 from utilities.physical_functions import schwarzschild_solution
 
@@ -48,13 +48,13 @@ ax_mass.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 
 """
 Numerical solution of TOV equations for a spherically symmetric,
-uniform-density relativistic star using the RK4 method.
+uniform-density relativistic star using solve_ivp from SciPy.
 -----------------------------------------
 same parameters as before
 """
 
 # Numerical solution (parameters in geometrized units)
-numerical_profile = rk4_schwarzschild_solution(M, R_cgs, discretization_points)
+numerical_profile = solve_tov_schwarzschild(M, R_cgs)
 r_cgs_numerical = numerical_profile[0]
 p_numerical = numerical_profile[1]
 m_numerical = numerical_profile[2] / M_sun_geo  # Convert to M/M_sun

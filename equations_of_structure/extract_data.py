@@ -2,6 +2,8 @@
 # Imports
 # =====================
 from numpy import loadtxt, ndarray
+from pathlib import Path
+from typing import Union
 
 """
 Extract pressure data from an Equation of State (EoS) text file
@@ -14,7 +16,7 @@ Units:
 """
 
 
-def extract_mass_density_from_eos_txt(path: str, comments: str = "#") -> ndarray:
+def extract_mass_density_from_eos_txt(path: Union[str, Path], comments: str = "#") -> ndarray:
     # Load numerical data from the text file, ignoring commented lines
     np_data = loadtxt(path, comments=comments)
     # Extract the mass density column (slicing)
@@ -22,7 +24,7 @@ def extract_mass_density_from_eos_txt(path: str, comments: str = "#") -> ndarray
     return mass_density
 
 
-def extract_pressure_from_eos_txt(path: str, comments: str = "#") -> ndarray:
+def extract_pressure_from_eos_txt(path: Union[str, Path], comments: str = "#") -> ndarray:
     # Load numerical data from the text file, ignoring commented lines
     np_data = loadtxt(path, comments=comments)
     # Extract the pressure column (slicing)

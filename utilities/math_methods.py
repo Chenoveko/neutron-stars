@@ -1,33 +1,33 @@
 # =====================
 # Imports
 # =====================
-from typing import Callable
+from typing import Callable, Tuple
 
-from numpy import ndarray, linspace, array, empty, ndenumerate, pi, sqrt, log10
+from numpy import ndarray, array, pi, sqrt, isfinite
+from scipy.integrate import solve_ivp
 
 from utilities.physical_functions import tov_equations
-from utilities.physical_data import pressure_geo_to_cgs, energy_density_cgs_to_geo, pressure_cgs_to_geo
 
 """
-RK4 method to solve TOV equations with uniform density (Schwarzschild solution)
+Numerical integration to solve TOV equations with uniform density (Schwarzschild solution)
 -----------------------------------------------------------------------------------------
 Interior solution for spherically symmetric relativistic stars with uniform-density.
 
 From:
-    Computational Physics notes, course 24/25
-    Jacobo Ruiz de Elvira Carrascal
+    SciPy documentation
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html#scipy.integrate.solve_ivp
 
 Units:
     Geometrized units in CGS
 """
 
 
-def rk4_schwarzschild_solution(M: float, R: float, n: int, r0: float = 1e-8) -> ndarray:
+def solve_tov_schwarzschild(M: float, R: float, r0: float = 1e-8, method: str = 'RK45') -> ndarray:
     """
-    :param r0: Initial point near center
     :param M: total mass
     :param R: total radius
-    :param n: Number of points in stepe discretization of tstepe interval [r0, R].
+    :param r0: radial point near center
+    :param method: Integration method to use
     :return:
         - r_points: Numpy array of radial coordinate points
         - p_points: Numpy array of interior pressure points
@@ -35,7 +35,6 @@ def rk4_schwarzschild_solution(M: float, R: float, n: int, r0: float = 1e-8) -> 
     """
     if M / R >= 4 / 9:
         raise ValueError("Schwarzschild interior solution requires M/R < 4/9")
-
     # Central pressure of schwarzschild_solution
     p_c = (3 * M / (4 * pi * R ** 3)) * (1 - sqrt(1 - 2 * M / R)) / (3 * sqrt(1 - 2 * M / R) - 1)
     # Uniform energy density
@@ -43,98 +42,100 @@ def rk4_schwarzschild_solution(M: float, R: float, n: int, r0: float = 1e-8) -> 
     # Taylor expansion (order 3) near center to get initial conditions
     p_r0 = p_c - (2 / 3) * pi * r0 ** 2 * (rho + p_c) * (rho + 3 * p_c)
     m_r0 = (4 / 3) * pi * rho * r0 ** 3
-    # Radial points
-    r_points = linspace(r0, R, n)
-    # Radial step size
-    step = r_points[1] - r_points[0]
-    # Initialize solution arrays
-    p_points = empty(n, float)
-    m_points = empty(n, float)
-    init = array([p_r0, m_r0], float)  # Initial conditions
-    # Looping
-    for index, r in ndenumerate(r_points):
-        p_points[index] = init[0]
-        m_points[index] = init[1]
-        # RK4 step
-        k1 = step * tov_equations(init, r, rho)
-        k2 = step * tov_equations(init + 0.5 * k1, r + 0.5 * step, rho)
-        k3 = step * tov_equations(init + 0.5 * k2, r + 0.5 * step, rho)
-        k4 = step * tov_equations(init + k3, r + step, rho)
-        init += (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
-    return array([r_points, p_points, m_points], float)
+
+    # System to use solve_ivp
+    def tov_system(r, y):
+        p, m = y
+        if p <= 0:
+            return [0.0, 0.0]
+        return tov_equations(y, r, rho)
+
+    # Initial conditions
+    init = array([p_r0, m_r0], float)
+    # Integrate
+    sol = solve_ivp(fun=tov_system, t_span=(r0, R), y0=init, method=method, first_step=10, max_step=20, rtol=1e-4,
+                    atol=1e-6)
+    return array([sol.t, sol.y[0], sol.y[1]], float)
 
 
 """
-RK4 method for TOV equations with free central pressure using EoS
+Numerical integration to solve TOV equations with free central pressure using EoS
 -----------------------------------------------------------------------------------------
 Interior solution for spherically symmetric relativistic stars.
 
 From:
-    Computational Physics notes, course 24/25
-    Jacobo Ruiz de Elvira Carrascal
+    SciPy documentation
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html#scipy.integrate.solve_ivp
 
 Units:
     Geometrized units in CGS
 """
 
 
-def rk4_eos_pc_free(p_c: ndarray, rho: Callable, r0: float = 1e-4, step: float = 10) -> ndarray:
+def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float = 20e5,
+                  method: str = 'RK45') -> Tuple[ndarray, ndarray, ndarray, bool]:
     """
-    :param p_c: Numpy array of central pressure points in GEO CGS units
-    :param rho: Function of energy density in GEO CGS units
-    :param r0: Initial point near center
-    :param step: Radial step size in CGS
+    Solves the TOV equations for a given equation of state
+    :param p_c: Central pressure in GEO-CGS units
+    :param rho_func: Function that returns the energy density as a function of pressure.
+    :param r0: Initial radius near the center to avoid numerical singularities.
+    :param r_max: Maximum radius up to which the integration is performed.
+    :param method: Numerical integration method used by the ODE solver.
     :return:
-        - M_points: Numpy array of total mass enclosed points
-        - R_points: Numpy array of total radius
+        - r : Numpy array of radial points
+        - p : Numpy array of interior pressure
+        - m : Numpy array of enclosed mass
+        - status: Stop event bool, 1 if stopped by an event, 0 if reached r_max
     """
-    p_min = pressure_cgs_to_geo(0.35e15)
-    print(p_min)
-    print(p_c)
-    # Initialize  arrays of total mass and total radius
-    M_total = []
-    R_total = []
-    # Looping over central pressure
-    for p_central in p_c:
-        print(p_central)
-        # Initialize radius variable
-        r = r0
-        # Taylor expansion (order 3) near center to get initial conditions
-        rho_c = rho(p_central)
-        print("rhocentral",rho_c)
-        p_r0 = p_central - (2 / 3) * pi * r0 ** 2 * (rho_c + p_central) * (rho_c + 3 * p_central)
-        m_r0 = (4 / 3) * pi * rho_c * r0 ** 3
-        # Initial conditions
-        init = array([p_r0, m_r0], float)
-        # Integrate until null pressure (star surface)
-        while init[0] > p_min:
-            # RK4 step
-            # k1
-            p1 = init[0]
-            rho1 = rho(p1)
-            k1 = step * tov_equations(init, r, rho1)
+    # Integrate until pressure has dropped by 15 orders of magnitude
+    p_min = p_c * 1e-15
+    # Taylor expansion (order 3) near center to get initial conditions
+    rho_c = rho_func(p_c)
+    p_r0 = p_c - (2 / 3) * pi * r0 ** 2 * (rho_c + p_c) * (rho_c + 3 * p_c)
+    m_r0 = (4 / 3) * pi * rho_c * r0 ** 3
+    # Initial conditions
+    init = array([p_r0, m_r0], float)
 
-            # k2
-            y2 = init + 0.5 * k1
-            p2 = y2[0]
-            rho2 = rho(p2)
-            k2 = step * tov_equations(y2, r + 0.5 * step, rho2)
+    # System to use solve_ivp
+    def tov_system(r, y):
+        p, m = y
+        rho_val = rho_func(p)
+        return tov_equations(y, r, rho_val)
 
-            # k3
-            y3 = init + 0.5 * k2
-            p3 = y3[0]
-            rho3 = rho(p3)
-            k3 = step * tov_equations(y3, r + 0.5 * step, rho3)
+    # Event to trigger when pressure crosses p_min downward
+    def event_pressure_threshold(r, y):
+        return y[0] - p_min
 
-            # k4
-            y4 = init + k3
-            p4 = y4[0]
-            rho4 = rho(p4)
-            k4 = step * tov_equations(y4, r + step, rho4)
+    event_pressure_threshold.terminal = True
+    event_pressure_threshold.direction = -1
 
-            init += (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
-            r += step
-        # Store total mass and radius for this central pressure
-        M_total.append(init[1])
-        R_total.append(r)
-    return array([M_total, R_total], float)
+    # Event to trigger when pressure becomes negative
+    def event_negative_pressure(r, y):
+        return y[0]
+
+    event_negative_pressure.terminal = True
+    event_negative_pressure.direction = -1
+
+    # Event to trigger when mass saturates
+    def event_mass_saturation(r, y):
+        p, m = y
+        eps_rel = 1e-8
+        if (not isfinite(p)) or (p <= 0) or (not isfinite(m)) or (m <= 0):
+            return 0.0
+        rho = rho_func(p)
+        if (not isfinite(rho)) or (rho <= 0):
+            return 0.0
+        dm_dr = 4.0 * pi * r ** 2 * rho
+        return (dm_dr / m) - eps_rel
+
+    event_mass_saturation.terminal = True
+    event_mass_saturation.direction = -1
+    # Integrate
+    sol = solve_ivp(fun=tov_system, t_span=(r0, r_max), y0=init, method=method,
+                    events=[event_pressure_threshold, event_negative_pressure, event_mass_saturation], max_step=1e3,
+                    rtol=1e-4, atol=1e-6)
+    r = sol.t
+    p = sol.y[0]
+    m = sol.y[1]
+    status = sol.status
+    return r, p, m, status
