@@ -31,9 +31,9 @@ log10_p_sly4 = log10(extract_pressure_from_eos_txt(BASE_DIR / "eos_sly4.txt"))
 log10_rho_sly4 = log10(extract_mass_density_from_eos_txt(BASE_DIR / "eos_sly4.txt"))
 
 # Interpolation using Scipy PCHIP
-pchip_log10_apr = PchipInterpolator(log10_p_apr, log10_rho_apr, extrapolate=False)
-pchip_log10_gnh3 = PchipInterpolator(log10_p_gnh3, log10_rho_gnh3,extrapolate=False)
-pchip_log10_sly4 = PchipInterpolator(log10_p_sly4, log10_rho_sly4, extrapolate=False)
+pchip_log10_apr = PchipInterpolator(log10_p_apr, log10_rho_apr, extrapolate=True)
+pchip_log10_gnh3 = PchipInterpolator(log10_p_gnh3, log10_rho_gnh3,extrapolate=True)
+pchip_log10_sly4 = PchipInterpolator(log10_p_sly4, log10_rho_sly4, extrapolate=True)
 
 # Rho functions in CGS units
 def rho_pchip_log10_apr(log10_p: ndarray) -> ndarray:
