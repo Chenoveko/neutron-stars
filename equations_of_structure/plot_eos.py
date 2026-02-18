@@ -3,8 +3,9 @@
 # =====================
 import matplotlib.pyplot as plt
 from numpy import log10
-
+from utilities.physical_functions import rho_degenerate_fermions_ur, rho_degenerate_fermions_nr
 from equations_of_structure.extract_data import extract_mass_density_from_eos_txt, extract_pressure_from_eos_txt
+from utilities.physical_data import c
 
 """
 Equations of Structure (EoS)
@@ -52,4 +53,44 @@ ax_zoom.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_zoom.legend(loc="upper left")
 ax_zoom.set_xlim(xmin=32, xmax=36.7)
 ax_zoom.set_ylim(ymin=13.5, ymax=15.8)
+
+
+# Plot of all EOS, log10(mass density) vs log10(pressure)
+# Pressure for Fermi
+p_fermi = extract_pressure_from_eos_txt("eos_akmalpr.txt")
+log10_p_fermi = log10(p_fermi)
+# Rho Fermi UR
+rho_fermi_ur = rho_degenerate_fermions_ur(p_fermi)/c**2
+log10_rho_fermi_ur = log10(rho_fermi_ur)
+# Rho Fermi NR
+rho_fermi_nr = rho_degenerate_fermions_nr(p_fermi)/c**2
+log10_rho_fermi_nr = log10(rho_fermi_nr)
+
+fig_all, ax_all = plt.subplots(figsize=(7.5, 4.5))
+ax_all.plot(log10_p_apr, log10_rho_apr, color='goldenrod', linewidth=1.5, label="APR")
+ax_all.plot(log10_p_gnh3, log10_rho_gnh3, color='blue', linewidth=1.5, label="Glendenning NH3")
+ax_all.plot(log10_p_sly4, log10_rho_sly4, color='red', linewidth=1.5, label="SLy4")
+ax_all.plot(log10_p_fermi, log10_rho_fermi_ur, color='green', linewidth=1.5, label="Fermi UR")
+ax_all.plot(log10_p_fermi, log10_rho_fermi_nr, color='pink', linewidth=1.5, label="Fermi NR")
+ax_all.set_xlabel(r'$\log_{10}(p)$')
+ax_all.set_ylabel(r'$\log_{10}(\rho)$')
+ax_all.set_title(r'EoS Profile')
+ax_all.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_all.legend(loc="upper left")
+
+# Zoom from previous plot
+fig_zoom_all, ax_zoom_all = plt.subplots(figsize=(7.5, 4.5))
+ax_zoom_all.plot(log10_p_apr, log10_rho_apr, color='goldenrod', linewidth=1.5, label="APR")
+ax_zoom_all.plot(log10_p_gnh3, log10_rho_gnh3, color='blue', linewidth=1.5, label="Glendenning NH3")
+ax_zoom_all.plot(log10_p_sly4, log10_rho_sly4, color='red', linewidth=1.5, label="SLy4")
+ax_zoom_all.plot(log10_p_fermi, log10_rho_fermi_ur, color='green', linewidth=1.5, label="Fermi UR")
+ax_zoom_all.plot(log10_p_fermi, log10_rho_fermi_nr, color='pink', linewidth=1.5, label="Fermi NR")
+ax_zoom_all.set_xlabel(r'$\log_{10}(p)$')
+ax_zoom_all.set_ylabel(r'$\log_{10}(\rho)$')
+ax_zoom_all.set_title(r'EoS Profile')
+ax_zoom_all.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_zoom_all.legend(loc="upper left")
+ax_zoom_all.set_xlim(xmin=32, xmax=36.7)
+ax_zoom_all.set_ylim(ymin=13.5, ymax=15.8)
+
 plt.show()

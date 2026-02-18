@@ -10,7 +10,7 @@ from numpy import logspace, log10, max
 
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
-p_central_array_cgs = logspace(33.2, 36.5, 200) # Array of central pressure in CGS
+p_central_array_cgs = logspace(33.2, 36.5, 5) # Array of central pressure in CGS
 p_central_array_geo = pressure_cgs_to_geo(p_central_array_cgs)  # Array of central pressure in GEO
 log10_p_central_array_cgs = log10(p_central_array_cgs)
 

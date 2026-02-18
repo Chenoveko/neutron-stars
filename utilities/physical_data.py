@@ -2,7 +2,7 @@
 # Imports
 # =====================
 from numpy import asarray
-
+from scipy.constants import c
 """
 Physical and Astronomical Constants
 ----------------------------------
@@ -13,7 +13,7 @@ From:
 Units:
     Centimetre–Gram–Second system (CGS)
 """
-c = 3e10  # Speed of light in vacuum (cm/s)
+c = c * 100  # Speed of light in vacuum (cm/s)
 G = 6.67e-8  # Gravitational constant (dyn cm^2/g^2)
 # Masses (g)
 M_sun = 1.99e33

@@ -72,7 +72,7 @@ Units:
 """
 
 
-def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float = 20e5,
+def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float = 40e5,
                   method: str = 'RK45') -> Tuple[ndarray, ndarray, ndarray, bool]:
     """
     Solves the TOV equations for a given equation of state

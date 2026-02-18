@@ -9,7 +9,7 @@ from utilities.physical_data import M_sun, pressure_cgs_to_geo, pressure_geo_to_
 
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
-p_central_geo = pressure_cgs_to_geo(1.5e35)  # Central pressure in CGS
+p_central_geo = pressure_cgs_to_geo(1.5e35)  # Central pressure in CGS 
 
 # ==========Integration==========#
 
@@ -37,7 +37,7 @@ ax_pressure.plot(r_apr, p_apr, color='goldenrod', linewidth=1.5, label="APR")
 ax_pressure.plot(r_gnh3, p_gnh3, color='blue', linewidth=1.5, label="GNH3")
 ax_pressure.plot(r_sly4, p_sly4, color='red', linewidth=1.5, label="SLy4")
 ax_pressure.set_xlabel(r'$r\ (km)$')
-ax_pressure.set_ylabel(r'$p\ (dyn\,cm^{-2})$')
+ax_pressure.set_ylabel(r'$p(r)\ (dyn\,cm^{-2})$')
 ax_pressure.set_title(r'Interior Pressure')
 ax_pressure.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_pressure.legend(loc="upper right")
@@ -48,7 +48,7 @@ ax_zoom_pressure.plot(r_apr, p_apr, color='goldenrod', linewidth=1.5, label="APR
 ax_zoom_pressure.plot(r_gnh3, p_gnh3, color='blue', linewidth=1.5, label="GNH3")
 ax_zoom_pressure.plot(r_sly4, p_sly4, color='red', linewidth=1.5, label="SLy4")
 ax_zoom_pressure.set_xlabel(r'$r\ (km)$')
-ax_zoom_pressure.set_ylabel(r'$p\ (dyn\,cm^{-2})$')
+ax_zoom_pressure.set_ylabel(r'$p(r)\ (dyn\,cm^{-2})$')
 ax_zoom_pressure.set_title(r'Interior Pressure Surface ')
 ax_zoom_pressure.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_zoom_pressure.legend(loc="upper right")
@@ -61,7 +61,7 @@ ax_mass.plot(r_apr, m_apr, color='goldenrod', linewidth=1.5, label="APR")
 ax_mass.plot(r_gnh3, m_gnh3, color='blue', linewidth=1.5, label="GNH3")
 ax_mass.plot(r_sly4, m_sly4, color='red', linewidth=1.5, label="SLy4")
 ax_mass.set_xlabel(r'$r\ (km)$')
-ax_mass.set_ylabel(r'$M / M_{\odot}$')
+ax_mass.set_ylabel(r'$m(r) / M_{\odot}$')
 ax_mass.set_title(r'Enclosed Mass')
 ax_mass.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_mass.legend(loc="upper left")
@@ -72,7 +72,7 @@ ax_zoom_mass.plot(r_apr, m_apr, color='goldenrod', linewidth=1.5, label="APR")
 ax_zoom_mass.plot(r_gnh3, m_gnh3, color='blue', linewidth=1.5, label="GNH3")
 ax_zoom_mass.plot(r_sly4, m_sly4, color='red', linewidth=1.5, label="SLy4")
 ax_zoom_mass.set_xlabel(r'$r\ (km)$')
-ax_zoom_mass.set_ylabel(r'$M / M_{\odot}$')
+ax_zoom_mass.set_ylabel(r'$m(r) / M_{\odot}$')
 ax_zoom_mass.set_title(r'Enclosed Mass Surface')
 ax_zoom_mass.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_zoom_mass.legend(loc="upper left")
