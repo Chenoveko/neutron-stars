@@ -34,6 +34,35 @@ def tov_equations(var: ndarray, r: float, rho: float) -> ndarray:
     dm_dr = 4.0 * pi * r ** 2 * rho
     return array([dp_dr, dm_dr], float)
 
+"""
+Newtonian equations of stellar structure
+-----------------------------------------
+Equations of structure for spherically symmetric relativistic stars.
+
+From:
+    General Relativity and its Applications
+    Valeria Ferrari
+
+Units:
+    Geometrized units in CGS
+"""
+
+def newton_equations(var: ndarray, r: float, rho: float) -> ndarray:
+    """
+    Newton equations in GEO units (white dwarfs)
+    :param var: state variables
+    :param r: radial coordinate
+    :param rho: mass density
+    :return: derivatives
+    """
+    # Unpack variables
+    p, m = var
+    # Interior pressure equation
+    dp_dr = - m * rho / (r**2)
+    # Enclosed mass equation
+    dm_dr = 4.0 * pi * (r**2) * rho
+    return array([dp_dr, dm_dr], float)
+
 
 """
 Tolman–Oppenheimer–Volkoff (TOV) Equations, Schwarzschild interior solution.
@@ -74,7 +103,15 @@ def schwarzschild_solution(r: ndarray, M: float, R: float) -> ndarray:
 """
 Equation of State for Non-Relativistic Degenerate Fermions
 -----------------------------------------
+
+From:
+    General Relativity and its Applications
+    Valeria Ferrari
+
+Units:
+    Geometrized units in CGS
 """
+
 
 
 def p_degenerate_fermions_nr(rho: ndarray, m_f: float = m_n, Z: int = 8, A: int = 16) -> ndarray:
