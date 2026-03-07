@@ -80,4 +80,4 @@ ax_zoom.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_zoom.legend(loc="upper right")
 ax_zoom.set_xlim(xmin=-20, xmax=42)
 
-plt.show()f
+plt.show()

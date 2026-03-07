@@ -8,7 +8,7 @@ from utilities.physical_data import c
 from numpy import logspace, log10
 
 # ==========Parameters==========#
-rho_energy_cgs = logspace(20, 30, 3)
+rho_energy_cgs = logspace(20, 35, 200)
 rho_mass_cgs = rho_energy_cgs / c**2
 log10_rho_energy_cgs = log10(rho_energy_cgs)
 
