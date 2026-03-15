@@ -136,3 +136,27 @@ def energy_density_geo_to_cgs(rho_geo):
     rho_geo = _arr(rho_geo)
     rho_cgs = (c ** 4 / G) * rho_geo
     return rho_cgs
+
+# -----------------------------
+# Angular frequency (CGS <-> geometric)
+# -----------------------------
+def omega_cgs_to_geo(omega_cgs):
+    """
+    :param omega_cgs: Angular frequency in CGS units [s^-1].
+    :return:
+        - omega_geo: Angular frequency in geometrized units [cm^-1].
+    """
+    omega_cgs = asarray(omega_cgs, dtype=complex)
+    omega_geo = omega_cgs / c
+    return omega_geo
+
+
+def omega_geo_to_cgs(omega_geo):
+    """
+    :param omega_geo: Angular frequency in geometrized units [cm^-1].
+    :return:
+        - omega_cgs: Angular frequency in CGS units [s^-1].
+    """
+    omega_geo = asarray(omega_geo, dtype=complex)
+    omega_cgs = omega_geo * c
+    return omega_cgs

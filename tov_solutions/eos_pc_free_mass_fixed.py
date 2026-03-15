@@ -89,6 +89,7 @@ for p_c in p_central_array_apr_geo:
     tot_mass = m[-1]
     if target_mass - mass_threshold <= tot_mass <= target_mass + mass_threshold:
         p_central_apr_geo = p_c
+        print("central pressure in geo units for APR: ",p_central_apr_geo)
         break
     else:
         continue
@@ -100,6 +101,7 @@ for p_c in p_central_array_gnh3_geo:
     tot_mass = m[-1]
     if target_mass - mass_threshold <= tot_mass <= target_mass + mass_threshold:
         p_central_gnh3_geo = p_c
+        print("central pressure in geo units for GNH3: ", p_central_gnh3_geo)
         break
     else:
         continue
@@ -111,6 +113,7 @@ for p_c in p_central_array_sly4_geo:
     tot_mass = m[-1]
     if target_mass - mass_threshold <= tot_mass <= target_mass + mass_threshold:
         p_central_sly4_geo = p_c
+        print("central pressure in geo units for SLy4: ", p_central_sly4_geo)
         break
     else:
         continue
