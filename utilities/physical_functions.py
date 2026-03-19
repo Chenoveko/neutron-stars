@@ -16,9 +16,10 @@ All equations are expressed in geometrized units (G = c = 1).
 # Imports
 # =====================
 from numpy import pi, sqrt, array, ndarray
+from numba import njit
 
 
-def tov_equations(var: ndarray, r: float, rho: float) -> ndarray:
+def tov_equations(var: ndarray, r: float, rho: float) -> tuple[float, float]:
     """
     TOV equations in GEO units
     :param var: state variables
@@ -27,15 +28,15 @@ def tov_equations(var: ndarray, r: float, rho: float) -> ndarray:
     :return: derivatives
     """
     # Unpack variables
-    p, m = var
+    p, m = var[0], var[1]
     # Interior pressure equation
     dp_dr = - (rho + p) * (m + 4 * pi * r ** 3 * p) / (r * (r - 2 * m))
     # Enclosed mass equation
     dm_dr = 4.0 * pi * r ** 2 * rho
-    return array([dp_dr, dm_dr], float)
+    return dp_dr, dm_dr
 
 
-def schwarzschild_solution(r: ndarray, M: float, R: float) -> ndarray:
+def schwarzschild_solution(r: ndarray, M: float, R: float) -> tuple[float, float]:
     """
     Analytical Schwarzschild interior solution
     :param r: radial coordinate
@@ -55,4 +56,4 @@ def schwarzschild_solution(r: ndarray, M: float, R: float) -> ndarray:
     )
     # Enclosed mass
     m = (4.0 / 3.0) * pi * rho * r ** 3
-    return array([p, m], float)
+    return p, m

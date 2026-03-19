@@ -2,12 +2,12 @@
 # Imports
 # =====================
 from typing import Callable, Tuple
-from numpy import ndarray, array, pi, sqrt, isfinite
+from numpy import ndarray, array, pi, sqrt, isfinite,log
 from scipy.integrate import solve_ivp
 from physical_functions import tov_equations
 
 def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float = 15e5,
-                  method: str = 'RK45') -> Tuple[ndarray, ndarray, ndarray, bool]:
+                  method: str = 'RK45') -> Tuple[ndarray, ndarray, ndarray, ndarray, bool]:
     """
     Solves the TOV equations for a given equation of state
     :param p_c: Central pressure in GEO-CGS units
@@ -50,28 +50,22 @@ def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float
 
     event_negative_pressure.terminal = True
     event_negative_pressure.direction = -1
-
-    # Event to trigger when mass saturates
-    def event_mass_saturation(r, y):
-        p, m, nu= y
-        eps_rel = 1e-8
-        if (not isfinite(p)) or (p <= 0) or (not isfinite(m)) or (m <= 0):
-            return 0.0
-        rho = rho_func(p)
-        if (not isfinite(rho)) or (rho <= 0):
-            return 0.0
-        dm_dr = 4.0 * pi * r ** 2 * rho
-        return (dm_dr / m) - eps_rel
-
-    event_mass_saturation.terminal = True
-    event_mass_saturation.direction = -1
     # Integrate
     sol = solve_ivp(fun=tov_system, t_span=(r0, r_max), y0=init, method=method,
-                    events=[event_pressure_threshold, event_negative_pressure, event_mass_saturation], max_step=1e3,
-                    rtol=1e-4, atol=1e-6)
+                    events=[event_pressure_threshold, event_negative_pressure], max_step=1e3,
+                    rtol=1e-10, atol=1e-10)
+
     r = sol.t
     p = sol.y[0]
     m = sol.y[1]
     nu = sol.y[2]
-    status = sol.status
-    return r, p, m, nu, status
+
+    # Surface values
+    R = r[-1]
+    M = m[-1]
+
+    # Normalize nu to match exterior Schwarzschild:
+    # g_tt = -exp(nu), so nu(R) = ln(1 - 2M/R)
+    nu = nu - nu[-1] + log(1.0 - 2.0 * M / R)
+
+    return r, p, m, nu, sol.status

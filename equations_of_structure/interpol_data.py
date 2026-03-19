@@ -82,14 +82,15 @@ Notes
 # =====================
 # Imports
 # =====================
-
+import time
 from numpy import log10, ndarray, nan, isfinite
 from scipy.interpolate import PchipInterpolator
 from pathlib import Path
 from equations_of_structure.extract_data import extract_mass_density_from_eos_txt, extract_pressure_from_eos_txt
 from utilities.physical_data import pressure_geo_to_cgs, energy_density_cgs_to_geo
 from utilities.physical_data import c
-
+# ==========Log time start==========#
+start = time.perf_counter()
 BASE_DIR = Path(__file__).resolve().parent
 
 # ==========Extract Values==========#
@@ -204,3 +205,7 @@ def rho_pchip_geo_sly4(p_geo):
     eps_cgs = rho_mass_cgs * c ** 2
 
     return energy_density_cgs_to_geo(eps_cgs)
+
+# ==========Log time end==========#
+end = time.perf_counter()
+print("Elapsed time = {}s".format(end - start))

@@ -34,12 +34,15 @@ Dependencies
 # Imports
 # =====================
 import matplotlib.pyplot as plt
+import time
 from numpy import logspace, log10, max
 
 from equations_of_structure.interpol_data import rho_pchip_geo_apr, rho_pchip_geo_gnh3, rho_pchip_geo_sly4
 from utilities.physical_data import M_sun, pressure_cgs_to_geo, mass_cgs_to_geo
 from utilities.tov_solvers import solve_tov_eos
 
+# ==========Log time start==========#
+start = time.perf_counter()
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
 p_central_array_cgs = logspace(33.2, 36.5, 100)  # Array of central pressure in CGS
@@ -118,3 +121,6 @@ plt.show()
 print(f'Max mass for APR:', max(tot_mass_apr))
 print(f'Max mass for GNH3:', max(tot_mass_gnh3))
 print(f'Max mass for SLY4:', max(tot_mass_sly4))
+# ==========Log time end==========#
+end = time.perf_counter()
+print("Elapsed time = {}s".format((end - start)))

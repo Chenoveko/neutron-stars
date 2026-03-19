@@ -63,13 +63,15 @@ structure (mass distribution and density profile) of neutron stars.
 # Imports
 # =====================
 import matplotlib.pyplot as plt
-
+import time
 from equations_of_structure.interpol_data import rho_pchip_geo_apr, rho_pchip_geo_gnh3, rho_pchip_geo_sly4
 from equations_of_structure.interpol_data import rho_pchip_log10_apr, rho_pchip_log10_gnh3, rho_pchip_log10_sly4
 from utilities.tov_solvers import solve_tov_eos
 from utilities.physical_data import M_sun, pressure_cgs_to_geo, pressure_geo_to_cgs, mass_cgs_to_geo
 from numpy import logspace, log10
 
+# ==========Log time start==========#
+start = time.perf_counter()
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
 p_central_array_apr_cgs = logspace(35.15, 35.2, 200)  # Array of central pressure in CGS for APR
@@ -89,7 +91,7 @@ for p_c in p_central_array_apr_geo:
     tot_mass = m[-1]
     if target_mass - mass_threshold <= tot_mass <= target_mass + mass_threshold:
         p_central_apr_geo = p_c
-        print("central pressure in geo units for APR: ",p_central_apr_geo)
+        print("central pressure in geo units for APR: ", p_central_apr_geo)
         break
     else:
         continue
@@ -161,3 +163,6 @@ ax_density.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_density.legend(loc="lower left")
 # fig_density.savefig("fixed_density.png", dpi=600, bbox_inches="tight")
 plt.show()
+# ==========Log time end==========#
+end = time.perf_counter()
+print("Elapsed time = {}s".format((end - start)))

@@ -21,7 +21,7 @@ def solve_regge_wheeler_inside(omega, r0, R, m_fun, p_fun, rho_fun, nu_fun, dm_f
         m = m_fun(r)
         p = p_fun(r)
         rho = rho_fun(r)
-        nu = nu_fun(r)
+        nu = 0.5 * nu_fun(r)
         m_prime = dm_fun(r)
 
         A = 1.0 - 2.0 * m / r

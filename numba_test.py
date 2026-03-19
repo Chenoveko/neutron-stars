@@ -13,7 +13,7 @@ def go_fast_parallel(a):  # Function is compiled and runs in machine code
     return a + trace
 
 
-@njit(fastmath=True)
+@njit(fastmath=True,cache=True)
 def go_fast(a):  # Function is compiled and runs in machine code
     trace = 0.0
     for i in range(a.shape[0]):
@@ -21,7 +21,7 @@ def go_fast(a):  # Function is compiled and runs in machine code
     return a + trace
 
 
-def go_slow(a):  # Function is compiled and runs in machine code
+def go_slow(a):
     trace = 0.0
     for i in range(a.shape[0]):
         trace += np.tanh(a[i, i])

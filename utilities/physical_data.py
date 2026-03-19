@@ -17,6 +17,7 @@ Geometrized units are commonly used in General Relativity, where:
 # =====================
 from scipy.constants import c as _c, G as _G_SI
 from numpy import asarray
+from numba import njit
 
 # Speed of light (CGS)
 c = _c * 100  # m/s → cm/s
@@ -41,6 +42,7 @@ def _arr(x):
 # -----------------------------
 # Time (CGS <-> geometric)
 # -----------------------------
+@njit
 def time_cgs_to_geo(t_cgs):
     """
     :param t_cgs: Time in CGS units [s].
@@ -51,7 +53,7 @@ def time_cgs_to_geo(t_cgs):
     t_geo = c * t_cgs
     return t_geo
 
-
+@njit
 def time_geo_to_cgs(t_geo):
     """
     :param t_geo: Time in geometrized units.
@@ -75,7 +77,6 @@ def mass_cgs_to_geo(m_cgs):
     m_cgs = _arr(m_cgs)
     m_geo = (G / c ** 2) * m_cgs
     return m_geo
-
 
 def mass_geo_to_cgs(m_geo):
     """
@@ -101,7 +102,6 @@ def pressure_cgs_to_geo(p_cgs):
     p_geo = (G / c ** 4) * p_cgs
     return p_geo
 
-
 def pressure_geo_to_cgs(p_geo):
     """
     :param p_geo: Pressure in geometrized units.
@@ -126,7 +126,6 @@ def energy_density_cgs_to_geo(rho_cgs):
     rho_geo = (G / c ** 4) * rho_cgs
     return rho_geo
 
-
 def energy_density_geo_to_cgs(rho_geo):
     """
     :param rho_geo: Energy density in geometrized units.
@@ -149,7 +148,6 @@ def omega_cgs_to_geo(omega_cgs):
     omega_cgs = asarray(omega_cgs, dtype=complex)
     omega_geo = omega_cgs / c
     return omega_geo
-
 
 def omega_geo_to_cgs(omega_geo):
     """
