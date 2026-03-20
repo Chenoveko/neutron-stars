@@ -37,7 +37,7 @@ r0 = r_sly4[0]
 # ================================
 # QNM meshgrid
 # ================================
-f_real_hz = np.linspace(8.030e3, 8.040e3, 10)      # [Hz]
+f_real_hz = np.linspace(8.0e3, 8.040e3, 10)      # [Hz]
 tau_s = np.linspace(29.25e-6, 29.35e-6, 10)    # [s]
 
 F, TAU = np.meshgrid(f_real_hz, tau_s)
