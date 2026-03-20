@@ -135,6 +135,7 @@ m_gnh3 = m_gnh3 / M_sun_geo  # Convert mass points
 
 # Integrate TOV equations using SLY4 EoS
 r_sly4, p_sly4, m_sly4, status_sly4l = solve_tov_eos(p_central_sly4_geo, rho_pchip_geo_sly4)
+print(r_sly4[-1], m_sly4[-1])
 r_sly4 = r_sly4 / 1e5  # Convert radial points to Km
 p_sly4 = pressure_geo_to_cgs(p_sly4)  # Convert pressure to CGS
 m_sly4 = m_sly4 / M_sun_geo  # Convert mass points

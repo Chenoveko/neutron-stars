@@ -7,6 +7,8 @@ from qnm_functions import (
     regge_wheeler_g_out_t,
     s_ext,
 )
+from qnm_functions import regge_wheeler_g_in
+
 
 
 def solve_regge_wheeler_inside(omega, r0, R, m_fun, p_fun, rho_fun, nu_fun, dm_fun, l):
