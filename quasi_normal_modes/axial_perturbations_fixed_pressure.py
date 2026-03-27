@@ -1,17 +1,17 @@
 # =====================
 # Imports
 # =====================
-from numpy import array, pi, angle, linspace, meshgrid, vectorize
-import numpy as np
-from scipy.interpolate import PchipInterpolator
 import time
+
 import matplotlib.pyplot as plt
+from numpy import array, pi,real,imag,meshgrid,linspace,nanargmin,unravel_index,vectorize,abs,log
+from scipy.constants import c as c_is
+from scipy.interpolate import PchipInterpolator as pchip
+
 from equations_of_structure.interpol_data import rho_pchip_geo_sly4
+from solve_qnm import solve_qnm_inside, solve_qnm_outside, matching
 from tov_solvers import solve_tov_eos
-from utilities.physical_data import M_sun, omega_cgs_to_geo, mass_cgs_to_geo, omega_geo_to_cgs
-from muller import muller
-from utilities.physical_data import M_sun, pressure_cgs_to_geo, pressure_geo_to_cgs, mass_cgs_to_geo
-from qnm_functions import *
+from utilities.physical_data import M_sun, mass_cgs_to_geo
 
 
 # ==========Log time start==========#
@@ -19,57 +19,150 @@ start = time.perf_counter()
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
 p_central_sly4_geo = 1.103445918598322e-14
+c_cgs = c_is * 100  # m/s → cm/s
 
-# ==========TOV Solutions==========#
+# Omega
+f = 8.034e3  # [Hz]
+tau = 29.31e-6  # [s]
+omega_si = 2.0 * pi * f - 1j / tau  # IS
+omega_geo = omega_si / c_cgs  # GEO
+
+# Angle
+alpha = pi / 4
+
+# ================================
+# Solve TOV
+# ================================
 r_sly4, p_sly4, m_sly4, nu_sly4, _ = solve_tov_eos(p_central_sly4_geo, rho_pchip_geo_sly4)
 
-# ==========Interpolation TOV Solutions==========#
+# Interpolation -> rho(r), p(r), m(r), nu(r)
 rho_sly4 = array([rho_pchip_geo_sly4(p) for p in p_sly4])
-p_fun = PchipInterpolator(r_sly4, p_sly4)
-m_fun = PchipInterpolator(r_sly4, m_sly4)
-nu_fun = PchipInterpolator(r_sly4, nu_sly4)
-rho_fun = PchipInterpolator(r_sly4, rho_sly4)
-dm_fun = m_fun.derivative()
+p_fun = pchip(r_sly4, p_sly4)
+m_fun = pchip(r_sly4, m_sly4)
+nu_fun = pchip(r_sly4, nu_sly4)
+rho_fun = pchip(r_sly4, rho_sly4)
 R = r_sly4[-1]
 M = m_sly4[-1]
 r0 = r_sly4[0]
 
+# Plot  mass enclosed
+fig_mass, ax_mass = plt.subplots(figsize=(7.5, 4.5))
+ax_mass.plot(r_sly4/1e5, m_sly4 / M_sun_geo, color='red', linewidth=1.5, label="SLy4")
+ax_mass.set_xlabel(r'$r\ [km]$')
+ax_mass.set_ylabel(r'$m(r) / M_{\odot}$')
+ax_mass.set_title(rf'Enclosed mass')
+ax_mass.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_mass.legend(loc="upper left")
+
+# Plot  metric
+def nu_ext(r,M):
+    return 1/2*log(1-2*M/r)
+r_nu_out = linspace(r_sly4[-1],5*r_sly4[-1],300)
+fig_metric, ax_metric = plt.subplots(figsize=(7.5, 4.5))
+ax_metric.plot(r_sly4 / 1e5, nu_fun(r_sly4), color='red', linewidth=1.5, label="SLy4 in")
+ax_metric.plot(r_nu_out / 1e5, nu_ext(r_nu_out,m_sly4[-1]), color='red',linestyle='--', linewidth=1.5, label="SLy4 out")
+ax_metric.set_xlabel(r'$r\ [km]$')
+ax_metric.set_ylabel(r'$\nu(r)$')
+ax_metric.set_title(rf'metric')
+ax_metric.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_metric.legend(loc="upper left")
+# ================================
+# Solve RW inside
+# ================================
+r_rw_in, z_rw_in, z_prime_rw_in = solve_qnm_inside(r0, R, omega_geo, m_fun, p_fun, rho_fun, nu_fun)
+g_rw_in_R = z_prime_rw_in[-1] / z_rw_in[-1]  # Value of g_in(R)
+
+# Plot Z RW inside
+fig_z_in, ax_z_in = plt.subplots(figsize=(7.5, 4.5))
+ax_z_in.plot(r_rw_in / 1e5, real(z_rw_in), color='goldenrod', linewidth=1.5, label="Real Z")
+ax_z_in.plot(r_rw_in / 1e5, imag(z_rw_in), color='blue', linewidth=1.5, label="Imag Z")
+ax_z_in.set_xlabel(r'$r\ [km]$')
+ax_z_in.set_ylabel(r'$Z$')
+ax_z_in.set_title(rf'Z profile inside the star')
+ax_z_in.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_z_in.legend(loc="upper left")
+
+# ================================
+# Solve RW outside
+# ================================
+t_rw_out,g_rw_out = solve_qnm_outside(M,R,omega_geo,alpha)
+phase = g_rw_out -1j*omega_geo
+
+# Plot Phase Z RW outside
+fig_z_in, ax_z_in = plt.subplots(figsize=(7.5, 4.5))
+ax_z_in.plot(t_rw_out, real(phase), color='goldenrod', linewidth=1.5, label="Real Z")
+ax_z_in.plot(t_rw_out, imag(phase), color='blue', linewidth=1.5, label="Imag Z")
+ax_z_in.set_xlabel(r'$r\ [km]$')
+ax_z_in.set_ylabel(r'$Z$')
+ax_z_in.set_title(rf'Phase Z profile outside the star')
+ax_z_in.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
+ax_z_in.legend(loc="upper left")
+plt.show()
+
 # ================================
 # QNM meshgrid
 # ================================
-f_real_hz = np.linspace(8.0e3, 8.040e3, 10)      # [Hz]
-tau_s = np.linspace(29.25e-6, 29.35e-6, 10)    # [s]
+f_mesh = linspace(7.5e3, 8.5e3, 50)      # [Hz]
+tau_mesh = linspace(20-6, 50e-6, 50)    # [s]
 
-F, TAU = np.meshgrid(f_real_hz, tau_s)
+F, TAU = meshgrid(f_mesh, tau_mesh)
 
 # omega = 2 pi f - i / tau
-omega_si = 2.0 * np.pi * F - 1j / TAU # IS
-omega_geo = omega_cgs_to_geo(omega_si) # GEO
+OMEGA = (2.0 * pi * F - 1j / TAU)/c_cgs
 
-# condition ->  Im(omega) cos(alpha) - Re(omega) sin(alpha) < 0
-alpha_condition = vectorize(alpha_condition)
-alpha = np.pi / 4
+# ================================
+# Matching Function
+# ================================
+f_match = lambda omega: matching(r0, R, omega, m_fun, p_fun, rho_fun, nu_fun,M,alpha)
 
-cond = alpha_condition(alpha, omega_geo)
-if np.all(cond):
-    print("good")
-else:
-    print("bad")
-# ================================
-# Matching Function vectorize
-# ================================
-f_match = lambda omega: matching_function(omega, r_sly4, m_fun, p_fun, rho_fun, nu_fun, alpha)
-f_match = np.vectorize(f_match, otypes=[complex])
 # ================================
 # Evaluate abs(matching function)
 # ================================
-f_meshgrid = np.abs(f_match(omega_geo))
+from joblib import Parallel, delayed
+
+
+omega_flat = OMEGA.flatten()
+
+def eval_match(omega):
+    return abs(matching(r0, R, omega, m_fun, p_fun, rho_fun, nu_fun, M, alpha))
+
+results = Parallel(n_jobs=-1, verbose=1)(  # n_jobs=-1 usa todos los cores
+    delayed(eval_match)(omega) for omega in omega_flat
+)
+
+f_meshgrid = array(results).reshape(OMEGA.shape)
+
+
+# ================================
+# Heatmap 2D
+# ================================
+fig_heat2, ax_heat2 = plt.subplots(figsize=(7.5, 4.5))
+ax_heat2.pcolormesh(F, TAU, f_meshgrid,shading='auto')
+ax_heat2.set_xlabel('f [Hz]')
+ax_heat2.set_ylabel('tau [s]')
+ax_heat2.set_title(r'Heatmap matching')
+
+# ================================
+# Heatmap 3D
+# ================================
+fig_heat3 = plt.figure(figsize=(7.5, 4.5))
+ax_heat3 = fig_heat3.add_subplot(111, projection='3d')
+surf = ax_heat3.plot_surface(F, TAU, f_meshgrid,cmap='viridis',linewidth=0,antialiased=True)
+fig_heat3.colorbar(surf, ax=ax_heat3, shrink=0.6, label='|matching|')
+ax_heat3.set_xlabel('f [Hz]')
+ax_heat3.set_ylabel('tau [s]')
+ax_heat3.set_zlabel('|matching|')
+ax_heat3.set_title('Matching 3D surface')
+plt.show()
 
 # ================================
 # Diagnostics of meshgrid
 # ================================
-idx = np.nanargmin(f_meshgrid)
-i_min, j_min = np.unravel_index(idx, f_meshgrid.shape)
+
+"""
+
+idx = nanargmin(f_meshgrid)
+i_min, j_min = unravel_index(idx, f_meshgrid.shape)
 
 f0 = F[i_min, j_min]
 tau0 = TAU[i_min, j_min]
@@ -79,13 +172,15 @@ print(f"Min |F| = {f_meshgrid[i_min, j_min]:.6e}")
 print(f"f0 = {f0/1e3:.6f} kHz")
 print(f"tau0 = {tau0*1e6:.6f} us")
 
+
+"""
 # ================================
 # Muller search
 # ================================
-
+"""
 omegas_trial = omega_cgs_to_geo([
-    2.0 * np.pi * 8.03e3 - 1j / 29.25e-6 ,
-    2.0 * np.pi * 8.04e3 - 1j / 29.25e-6 ,
+    2.0 * np.pi * 8.0e3 - 1j / 29.15e-6 ,
+    2.0 * np.pi * 8.4e3 - 1j / 29.15e-6 ,
     2.0 * np.pi * 8.03e3 - 1j / 29.35e-6 ,
 ])
 
@@ -98,6 +193,9 @@ tau_qnm_us = -1.0 / omega_qnm_si.imag * 1e6
 print("===========Muller search===========")
 print(f"QNM: f = {f_qnm_khz:.6f} kHz, tau = {tau_qnm_us:.6f} us")
 print(f"Iterations: {res.iterations}")
+
+"""
+
 # ==========Log time end==========#
 end = time.perf_counter()
 print(f"Elapsed time = {end - start:.3f} s")

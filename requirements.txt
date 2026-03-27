@@ -3,3 +3,4 @@ numpy
 scipy
 mullerpy
 numba
+joblib

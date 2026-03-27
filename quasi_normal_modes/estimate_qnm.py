@@ -30,9 +30,8 @@ def qnm_im_fit(a:float,b:float,c:float,M:float,R:float)->complex:
     return 1e3/right
 
 
-# Estimate SLy4
+# Estimate SLy4 for 1.4 M sun star
 R = 1126026.005975641
 M = 205264.03991190076
-
 print("omega real en KHz: ",qnm_real_fit(-148.7,119.8,M,R))
 print("damping time: ",qnm_im_fit(-1221,365.1,21.63,M,R))

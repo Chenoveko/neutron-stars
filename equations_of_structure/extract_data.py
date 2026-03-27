@@ -50,3 +50,17 @@ def extract_pressure_from_eos_txt(path: Union[str, Path], comments: str = "#") -
     # Column 3 corresponds to pressure p
     pressure = np_data[:, 3]
     return pressure
+
+
+def extract_barionic_density_from_eos_txt(path: Union[str, Path], comments: str = "#") -> ndarray:
+    """
+    :param path: str or Path to the EoS text file
+    :param comments: Character marking comment lines to ignore (default: "#")
+    :return:
+        - pressure: One-dimensional NumPy array containing the barionic density values nB [fm^-3]
+    """
+    # Load numerical data from the text file, ignoring commented lines
+    np_data = loadtxt(path, comments=comments)
+    # Column 3 corresponds to pressure p
+    pressure = np_data[:, 3]
+    return pressure
