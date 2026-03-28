@@ -66,7 +66,7 @@ def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float
 
     # Integrate
     sol = solve_ivp(fun=tov_system, t_span=(r0, r_max), y0=init, method=method,
-                    events=[event_pressure_threshold, event_negative_pressure,event_mass_saturation], max_step=1e2,
+                    events=[event_pressure_threshold, event_negative_pressure,event_mass_saturation], max_step=20,
                     rtol=1e-10, atol=1e-10)
 
     r = sol.t

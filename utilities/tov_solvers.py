@@ -181,8 +181,8 @@ def solve_tov_schwarzschild(M: float, R: float, r0: float = 1e-8, method: str = 
     # Initial conditions
     init = array([p_r0, m_r0], float)
     # Integrate
-    sol = solve_ivp(fun=tov_system, t_span=(r0, R), y0=init, method=method, first_step=10, max_step=20, rtol=1e-4,
-                    atol=1e-6)
+    sol = solve_ivp(fun=tov_system, t_span=(r0, R), y0=init, method=method, first_step=10, max_step=20, rtol=1e-10,
+                    atol=1e-10)
     return sol.t, sol.y[0], sol.y[1]
 
 

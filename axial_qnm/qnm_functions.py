@@ -1,6 +1,5 @@
-from numpy import pi, exp, sin,cos
+from numpy import pi, exp, sin, cos
 from typing import Callable
-
 
 
 #######################################
@@ -9,7 +8,7 @@ from typing import Callable
 def axial_potential_in(r: float, m: Callable, p: Callable, rho: Callable, nu: Callable, l: int = 2) -> float:
     """
     Axial potential inside the star in GEO units
-        V(r) = e^{2ν(r)} / r^3 * [ l(l+1) r + 4π r^3 (ρ(r) - p(r)) - 6 m(r) ]
+        V(r) = e^{2ν(r)} / r^3 * [ l(l+1) r + 4π r^3 (ρ(r) + p(r)) - 6 m(r) ]
     :param r: radial coordinate
     :param m: mass value m(r)
     :param p: pressure value p(r)
@@ -18,40 +17,49 @@ def axial_potential_in(r: float, m: Callable, p: Callable, rho: Callable, nu: Ca
     :param l: angular momentum number
     :return: axial potential
     """
-    return exp(2.0 * nu(r)) / r**3 * (l * (l + 1) * r + 4.0 * pi * r**3 * (rho(r) - p(r)) - 6.0 * m(r))
+    return exp(2.0 * nu(r)) / r ** 3 * (l * (l + 1) * r + 4.0 * pi * r ** 3 * (rho(r) + p(r)) - 6.0 * m(r))
 
 
 def regge_wheeler_in(r: float, var, omega: complex, m: Callable, p: Callable, rho: Callable, nu: Callable,
-                     l: int = 2) -> tuple[complex, complex]:
+                     l: int = 2) -> tuple[float, float, float, float]:
     """
     Regge-Wheeler linear ODE inside the star in GEO units,
     Equation:
         d²z/dr_*² + [omega² - V(r)] z = 0
     Using:
-        dr*/dr = 1 / f(r)
+        dr*/dr = exp[-nu(r)]/f(r)^1/2
         f(r) = 1 - 2m(r)/r
         f'(r) = 2m(r)/r^2 - 2m'(r)/r
         m'(r) = 4*pi*r^2*rho(r)
     This gives:
-        d²z/dr² = -[f df/dr dz/dr + (omega² - V(r)) z] / f²
-
+        d²z/dr² =[-nu'(r) - f'(r)/(2f(r))] dz/dr- [exp(-2nu(r))/f(r)] * (omega² - V(r)) z
     :param r: radial coordinate
-    :param var: state variables (z, dz/dr)
+    :param var: state variables [Re(z),Im(z), Re(dz/dr),Im(dz/dr)]
     :param omega: angular frequency value
     :param m: mass value
     :param p: pressure value
     :param rho: energy density value
     :param nu: metric value
     :param l: angular momentum number
-    :return: derivatives (dz/dr, d²z/dr²)
+    :return: derivatives [Re(dz/dr),Im(dz/dr), Re(d²z/dr²),Im(d²z/dr²)]
     """
-    z, dzdr = var
+    # Unpack variables
+    z_re, z_im, dzdr_re, dzdr_im = var
+    # Reconstruct complex variables
+    z = z_re + 1j * z_im
+    dzdr = dzdr_re + 1j * dzdr_im
+    # Metric functions
     f = 1.0 - 2.0 * m(r) / r
+    # Derivatives
     m_prime = 4.0 * pi * r ** 2 * rho(r)
     f_prime = -2.0 * m_prime / r + 2.0 * m(r) / r ** 2
+    # nu'(r) from TOV
+    nu_prime = (m(r) + 4.0 * pi * r ** 3 * p(r)) / (r * (r - 2.0 * m(r)))
+    # Potential
     v = axial_potential_in(r, m, p, rho, nu, l)
-    d2zdr2 = (-(f * f_prime) * dzdr - (omega ** 2 - v) * z) / f ** 2
-    return dzdr, d2zdr2
+    # Second derivative (correct interior RW form)
+    d2zdr2 = ((-nu_prime - f_prime / (2.0 * f)) * dzdr - (exp(-2.0 * nu(r)) / f) * (omega ** 2 - v) * z)
+    return dzdr_re, dzdr_im, d2zdr2.real, d2zdr2.imag
 
 
 ########################################
@@ -84,46 +92,61 @@ def compact_rot_coord(t: float, R: float, alpha: float) -> complex:
     return R + ((1.0 - t) / t) * exp(1j * alpha)
 
 
-def regge_wheeler_out(t: float, g:complex, omega: complex, alpha: float, M: float, R: float, l: int = 2) -> complex:
+def regge_wheeler_out(t: float, var, omega: complex, alpha: float, M: float, R: float, l: int = 2) -> tuple[
+    float, float]:
     """
     Regge-Wheeler linear ODE outside the star in GEO units
     Equation:
-        d²z/dr_*² + [omega² - V(r)] z = 0
-    Using:
-        g = z'/z
-    This gives a Riccati equation:
-        dg/dr_* + g² + omega² - V(r) = 0
+        d²Z/dr_*² + [omega² - V(r)] Z = 0
+    Define:
+        g(r) = (1/Z) dZ/dr
     Using:
         dr*/dr = 1 / f(r)
         f(r) = 1 - 2M/r
+        d/dr_* = f(r) d/dr
     This gives:
-        f(r)dg/dr + g² + omega² - V(r) = 0
+        dZ/dr_* = f dZ/dr = f g Z
+        d²Z/dr_*² = f² (dg/dr + g²) Z + f f' g Z
+    Hence the Riccati equation:
+        f² (dg/dr + g²) + f f' g + omega² - V(r) = 0
+    i.e.:
+        dg/dr = -g² - (f'/f) g - (omega² - V(r))/f²
     Using CES:
-        r(t) = R + (1-t)/t exp(i*alpha)
-        dr/dt = - exp(i*alpha)/t^2
-    return:
-        dg/dt = dg/dr * dr/dt
-
+        r(t) = R + (1-t)/t exp(i alpha)
+        dr/dt = -exp(i alpha)/t²
+    Therefore:
+        dg/dt = (dg/dr)(dr/dt)
     :param t: compactified coordinate t ∈ (0, 1]
-    :param g: state variables
+    :param var: state variables [Re(g), Im(g)]
     :param omega: angular frequency value
     :param alpha: complex rotation angle
     :param M: total mass
     :param R: total radius
     :param l: angular momentum number
-    :return: derivative dg/dt
+    :return: derivatives [Re(dg/dt), Im(dg/dt)]
     """
     if alpha_condition(omega, alpha):
+        # Unpack variables
+        g_re, g_im = var
+        # Reconstruct complex variable
+        g = g_re + 1j * g_im
+        # CES parametrization
         r = compact_rot_coord(t, R, alpha)
+        # Metric functions
         f = 1.0 - 2.0 * M / r
+        f_prime = 2.0 * M / r**2
+        # Potential
         v = axial_potential_out(r, M, l)
+        # Derivatives
         drdt = -exp(1j * alpha) / t ** 2
-        return drdt * (v - g ** 2 - omega ** 2) / f
+        dgdr = -g ** 2 - (f_prime / f) * g - (omega ** 2 - v) / f ** 2
+        dgdt = drdt * dgdr
+        return dgdt.real, dgdt.imag
     else:
         raise ValueError("Alpha condition for CES is not met")
 
 
-def alpha_condition(omega: complex, alpha: float ) -> bool:
+def alpha_condition(omega: complex, alpha: float) -> bool:
     """
     Alpha condition for CES
         Im(omega) * cos(alpha) - Re(omega) * sin(alpha) < 0

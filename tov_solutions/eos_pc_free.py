@@ -80,6 +80,8 @@ for p_c in p_central_array_geo:
     tot_mass_sly4.append(m_sly4[-1])
     tot_radius_sly4.append(r_sly4[-1])
 
+print(tot_mass_sly4[0])
+print(tot_radius_sly4[0])
 # ==========Plot 1: Total Mass vs Central Pressure==========#
 fig_tot_mass, ax_tot_mass = plt.subplots(figsize=(7.5, 4.5))
 ax_tot_mass.plot(log10_p_central_array_cgs, tot_mass_apr, color='goldenrod', linewidth=1.5, label="APR")

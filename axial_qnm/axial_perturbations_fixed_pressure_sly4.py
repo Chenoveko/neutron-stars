@@ -4,15 +4,17 @@
 import time
 
 import matplotlib.pyplot as plt
-from numpy import array, pi,real,imag,meshgrid,linspace,nanargmin,unravel_index,vectorize,abs,log
+# import matplotlib
+# matplotlib.use('TkAgg')
+from numpy import array, pi, real, imag, meshgrid, linspace, log10, nanargmin, unravel_index, vectorize, abs, log
 from scipy.constants import c as c_is
 from scipy.interpolate import PchipInterpolator as pchip
 
 from equations_of_structure.interpol_data import rho_pchip_geo_sly4
-from solve_qnm import solve_qnm_inside, solve_qnm_outside, matching
+from solve_qnm import solve_qnm_inside, solve_qnm_outside, matching, muller_seed_meshgrid
 from tov_solvers import solve_tov_eos
 from utilities.physical_data import M_sun, mass_cgs_to_geo
-
+from mullerpy import muller
 
 # ==========Log time start==========#
 start = time.perf_counter()
@@ -37,30 +39,34 @@ r_sly4, p_sly4, m_sly4, nu_sly4, _ = solve_tov_eos(p_central_sly4_geo, rho_pchip
 
 # Interpolation -> rho(r), p(r), m(r), nu(r)
 rho_sly4 = array([rho_pchip_geo_sly4(p) for p in p_sly4])
-p_fun = pchip(r_sly4, p_sly4)
-m_fun = pchip(r_sly4, m_sly4)
-nu_fun = pchip(r_sly4, nu_sly4)
-rho_fun = pchip(r_sly4, rho_sly4)
+p_fun = pchip(r_sly4, p_sly4, extrapolate=False)
+m_fun = pchip(r_sly4, m_sly4, extrapolate=False)
+nu_fun = pchip(r_sly4, nu_sly4, extrapolate=False)
+rho_fun = pchip(r_sly4, rho_sly4, extrapolate=False)
 R = r_sly4[-1]
 M = m_sly4[-1]
 r0 = r_sly4[0]
 
 # Plot  mass enclosed
 fig_mass, ax_mass = plt.subplots(figsize=(7.5, 4.5))
-ax_mass.plot(r_sly4/1e5, m_sly4 / M_sun_geo, color='red', linewidth=1.5, label="SLy4")
+ax_mass.plot(r_sly4 / 1e5, m_sly4 / M_sun_geo, color='red', linewidth=1.5, label="SLy4")
 ax_mass.set_xlabel(r'$r\ [km]$')
 ax_mass.set_ylabel(r'$m(r) / M_{\odot}$')
 ax_mass.set_title(rf'Enclosed mass')
 ax_mass.grid(True, linestyle=':', linewidth=1.0, alpha=0.7)
 ax_mass.legend(loc="upper left")
 
+
 # Plot  metric
-def nu_ext(r,M):
-    return 1/2*log(1-2*M/r)
-r_nu_out = linspace(r_sly4[-1],5*r_sly4[-1],300)
+def nu_ext(r, M):
+    return 1 / 2 * log(1 - 2 * M / r)
+
+
+r_nu_out = linspace(r_sly4[-1], 5 * r_sly4[-1], 300)
 fig_metric, ax_metric = plt.subplots(figsize=(7.5, 4.5))
 ax_metric.plot(r_sly4 / 1e5, nu_fun(r_sly4), color='red', linewidth=1.5, label="SLy4 in")
-ax_metric.plot(r_nu_out / 1e5, nu_ext(r_nu_out,m_sly4[-1]), color='red',linestyle='--', linewidth=1.5, label="SLy4 out")
+ax_metric.plot(r_nu_out / 1e5, nu_ext(r_nu_out, m_sly4[-1]), color='red', linestyle='--', linewidth=1.5,
+               label="SLy4 out")
 ax_metric.set_xlabel(r'$r\ [km]$')
 ax_metric.set_ylabel(r'$\nu(r)$')
 ax_metric.set_title(rf'metric')
@@ -85,8 +91,8 @@ ax_z_in.legend(loc="upper left")
 # ================================
 # Solve RW outside
 # ================================
-t_rw_out,g_rw_out = solve_qnm_outside(M,R,omega_geo,alpha)
-phase = g_rw_out -1j*omega_geo
+t_rw_out, g_rw_out = solve_qnm_outside(M, R, omega_geo, alpha)
+phase = g_rw_out - 1j * omega_geo
 
 # Plot Phase Z RW outside
 fig_z_in, ax_z_in = plt.subplots(figsize=(7.5, 4.5))
@@ -102,99 +108,87 @@ plt.show()
 # ================================
 # QNM meshgrid
 # ================================
-f_mesh = linspace(7.5e3, 8.5e3, 50)      # [Hz]
-tau_mesh = linspace(20-6, 50e-6, 50)    # [s]
+f_mesh = linspace(7.98e3, 8.05e3, 5)
+tau_mesh = linspace(28.85e-6, 29.2e-6, 5)
 
 F, TAU = meshgrid(f_mesh, tau_mesh)
 
 # omega = 2 pi f - i / tau
-OMEGA = (2.0 * pi * F - 1j / TAU)/c_cgs
+OMEGA = (2.0 * pi * F - 1j / TAU) / c_cgs
 
 # ================================
 # Matching Function
 # ================================
-f_match = lambda omega: matching(r0, R, omega, m_fun, p_fun, rho_fun, nu_fun,M,alpha)
+f_match = lambda omega: matching(r0, R, omega, m_fun, p_fun, rho_fun, nu_fun, M, alpha)
 
 # ================================
 # Evaluate abs(matching function)
 # ================================
 from joblib import Parallel, delayed
 
-
 omega_flat = OMEGA.flatten()
+
 
 def eval_match(omega):
     return abs(matching(r0, R, omega, m_fun, p_fun, rho_fun, nu_fun, M, alpha))
+
 
 results = Parallel(n_jobs=-1, verbose=1)(  # n_jobs=-1 usa todos los cores
     delayed(eval_match)(omega) for omega in omega_flat
 )
 
 f_meshgrid = array(results).reshape(OMEGA.shape)
+f_meshgrid_log10 = log10(f_meshgrid)
 
+# ================================
+# Minimum search
+# ================================
+idx = unravel_index(nanargmin(f_meshgrid_log10), f_meshgrid_log10.shape)
+f_best = F[idx] / 1e3
+tau_best = TAU[idx] * 1e6
+print(f"Mínimo → f = {f_best:.3f} kHz | τ = {tau_best:.3f} µs")
 
 # ================================
 # Heatmap 2D
 # ================================
 fig_heat2, ax_heat2 = plt.subplots(figsize=(7.5, 4.5))
-ax_heat2.pcolormesh(F, TAU, f_meshgrid,shading='auto')
-ax_heat2.set_xlabel('f [Hz]')
-ax_heat2.set_ylabel('tau [s]')
+pcm = ax_heat2.pcolormesh(F / 1e3, TAU * 1e6, f_meshgrid_log10, shading='gouraud', cmap='viridis')
+cbar = fig_heat2.colorbar(pcm, ax=ax_heat2, pad=0.02)
+cbar.set_label(r'$\log_{10}|f_{\mathrm{match}}|$', rotation=90)
+ax_heat2.set_xlabel('f [KHz]')
+ax_heat2.set_ylabel(r'$\tau$ [$\mu$s]')
 ax_heat2.set_title(r'Heatmap matching')
+ax_heat2.plot(f_best, tau_best, 'ro', ms=4, label='Mínimo')
+ax_heat2.legend(loc='upper right', frameon=False)
 
 # ================================
 # Heatmap 3D
 # ================================
 fig_heat3 = plt.figure(figsize=(7.5, 4.5))
 ax_heat3 = fig_heat3.add_subplot(111, projection='3d')
-surf = ax_heat3.plot_surface(F, TAU, f_meshgrid,cmap='viridis',linewidth=0,antialiased=True)
-fig_heat3.colorbar(surf, ax=ax_heat3, shrink=0.6, label='|matching|')
-ax_heat3.set_xlabel('f [Hz]')
-ax_heat3.set_ylabel('tau [s]')
-ax_heat3.set_zlabel('|matching|')
+surf = ax_heat3.plot_surface(F / 1e3, TAU * 1e6, f_meshgrid_log10, edgecolor='none', antialiased=True, cmap='viridis')
+fig_heat3.colorbar(surf, ax=ax_heat3, shrink=0.6, label=r'$\log_{10}|f_{\mathrm{match}}|$')
+ax_heat3.set_xlabel('f [KHz]')
+ax_heat3.set_ylabel(r'$\tau$ [$\mu$s]')
+ax_heat3.set_zlabel(r'$\log_{10}|f_{\mathrm{match}}|$')
 ax_heat3.set_title('Matching 3D surface')
+ax_heat3.scatter(f_best, tau_best, f_meshgrid_log10[idx], color='red', s=10, label='Mínimo')
+ax_heat3.legend()
 plt.show()
 
 # ================================
-# Diagnostics of meshgrid
-# ================================
-
-"""
-
-idx = nanargmin(f_meshgrid)
-i_min, j_min = unravel_index(idx, f_meshgrid.shape)
-
-f0 = F[i_min, j_min]
-tau0 = TAU[i_min, j_min]
-omega0 = omega_geo[i_min, j_min]
-print("===========Meshgrid search===========")
-print(f"Min |F| = {f_meshgrid[i_min, j_min]:.6e}")
-print(f"f0 = {f0/1e3:.6f} kHz")
-print(f"tau0 = {tau0*1e6:.6f} us")
-
-
-"""
-# ================================
 # Muller search
 # ================================
-"""
-omegas_trial = omega_cgs_to_geo([
-    2.0 * np.pi * 8.0e3 - 1j / 29.15e-6 ,
-    2.0 * np.pi * 8.4e3 - 1j / 29.15e-6 ,
-    2.0 * np.pi * 8.03e3 - 1j / 29.35e-6 ,
-])
+p1, p2, p3 = muller_seed_meshgrid(F, TAU, f_meshgrid_log10)
 
-res = muller(f_match, omegas_trial, xtol=1e-10, ftol=1e-10, maxiter=50)
+w1 = (2*pi*p1[0] - 1j/p1[1]) / c_cgs
+w2 = (2*pi*p2[0] - 1j/p2[1]) / c_cgs
+w3 = (2*pi*p3[0] - 1j/p3[1]) / c_cgs
 
-omega_qnm = res.root
-omega_qnm_si = omega_geo_to_cgs(omega_qnm)
-f_qnm_khz = omega_qnm_si.real / (2.0 * np.pi) / 1e3
-tau_qnm_us = -1.0 / omega_qnm_si.imag * 1e6
-print("===========Muller search===========")
-print(f"QNM: f = {f_qnm_khz:.6f} kHz, tau = {tau_qnm_us:.6f} us")
-print(f"Iterations: {res.iterations}")
-
-"""
+res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=20)
+f_muller = res.root.real / (2*pi) * c_cgs / 1e3
+tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
+print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations}")
 
 # ==========Log time end==========#
 end = time.perf_counter()
