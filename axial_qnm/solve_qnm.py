@@ -3,9 +3,9 @@
 # =====================
 from typing import Tuple, Callable
 
-from numpy import array, ndarray, nanargmin, unravel_index
+from numpy import array, ndarray, nanargmin, unravel_index, linspace, pi, sqrt
 from scipy.integrate import solve_ivp
-
+from scipy.interpolate import PchipInterpolator
 from qnm_functions import regge_wheeler_in, regge_wheeler_out, compact_rot_coord
 
 
@@ -99,19 +99,74 @@ def matching(r0: float, R: float, omega: complex, m: Callable, p: Callable, rho:
 
 
 def muller_seed_meshgrid(F, TAU, Z):
+    """
+    Selects 3 Müller seeds from a meshgrid search.
+    Uses the minimum of Z and its neighboring points to build the seeds.
+    :param F: frequency meshgrid
+    :param TAU: damping time meshgrid
+    :param Z: log10 of matching function values
+    :return: three seed points (p1, p2, p3)
+    """
     ny, nx = Z.shape
     iy, ix = unravel_index(nanargmin(Z), Z.shape)
 
-    vecinos = []
+    neighbors = []
     for j in range(max(0, iy - 1), min(ny, iy + 2)):
         for i in range(max(0, ix - 1), min(nx, ix + 2)):
-            vecinos.append((Z[j, i], F[j, i], TAU[j, i], j, i))
+            neighbors.append((Z[j, i], F[j, i], TAU[j, i], j, i))
 
-    vecinos.sort(key=lambda x: x[0])  # ordenar por valor de Z
+    neighbors.sort(key=lambda x: x[0])
 
-    # 3 mejores puntos del entorno
-    p1 = (vecinos[0][1], vecinos[0][2])
-    p2 = (vecinos[1][1], vecinos[1][2])
-    p3 = (vecinos[2][1], vecinos[2][2])
+    p1 = (neighbors[0][1], neighbors[0][2])
+    p2 = (neighbors[1][1], neighbors[1][2])
+    p3 = (neighbors[2][1], neighbors[2][2])
 
     return p1, p2, p3
+
+
+def extrapolate_qnm_point(p_hist, f_hist, tau_hist, p_new):
+    """
+    Extrapolate (f, tau) at p_new.
+    - 2 points  -> linear
+    - 3 points  -> linear using last two points
+    - >=4 points -> PCHIP
+    :param p_hist: array of central pressures
+    :param f_hist: array of frequencies [Hz]
+    :param tau_hist: array of damping times [s]
+    :param p_new: new central pressure
+    :return: extrapolated (f0, tau0)
+    """
+    p_hist, f_hist, tau_hist = array(p_hist,float), array(f_hist,float), array(tau_hist,float); n=len(p_hist)
+    if n<2: raise ValueError("At least 2 points required")
+    if n<=3: p0,p1=p_hist[-2],p_hist[-1]; sf=(f_hist[-1]-f_hist[-2])/(p1-p0); st=(tau_hist[-1]-tau_hist[-2])/(p1-p0); f0=f_hist[-1]+sf*(p_new-p1); tau0=tau_hist[-1]+st*(p_new-p1)
+    else: f0=float(PchipInterpolator(p_hist,f_hist,extrapolate=True)(p_new)); tau0=float(PchipInterpolator(p_hist,tau_hist,extrapolate=True)(p_new))
+    return f0, tau0
+
+def muller_seed_from_extrapolation(p_hist, f_hist, tau_hist, p_new, c_cgs, f_match=None, df_rel=2e-4, dtau_rel=2e-4, local_refine=True, n_local=5):
+    """
+    Generate 3 Müller seeds from extrapolation.
+    Uses local tangent direction and optional micro-refinement to avoid wrong minima.
+    :param p_hist: array of central pressures
+    :param f_hist: array of frequencies [Hz]
+    :param tau_hist: array of damping times [s]
+    :param p_new: new central pressure
+    :param c_cgs: speed of light [cm/s]
+    :param f_match: matching function
+    :param df_rel: relative frequency window
+    :param dtau_rel: relative tau window
+    :param local_refine: enable local search
+    :param n_local: local grid size
+    :return: (w1,w2,w3),(f0,tau0),(p1,p2,p3)
+    """
+    p_hist,f_hist,tau_hist=array(p_hist,float),array(f_hist,float),array(tau_hist,float); f0,tau0=extrapolate_qnm_point(p_hist,f_hist,tau_hist,p_new); df,dt=f_hist[-1]-f_hist[-2],tau_hist[-1]-tau_hist[-2]; vf,vt=df/max(abs(f0),1e-30),dt/max(abs(tau0),1e-30); nrm=sqrt(vf*vf+vt*vt); ef,et=(1.0,0.0) if nrm<1e-14 else (vf/nrm,vt/nrm); nf,nt=-et,ef; df0=max(df_rel*abs(f0),5.0); dt0=max(dtau_rel*abs(tau0),5e-10)
+    if local_refine and (f_match is not None):
+        fg, tg = linspace(f0-df0,f0+df0,n_local), linspace(tau0-dt0,tau0+dt0,n_local); best=(f0,tau0,1e300)
+        for ff in fg:
+            for tt in tg:
+                if tt<=0: continue
+                try: val=abs(f_match((2*pi*ff-1j/tt)/c_cgs)); best=(ff,tt,val) if val<best[2] else best
+                except: pass
+        f0,tau0=best[0],best[1]
+    p1=(f0,tau0); p2=(f0+0.8*df0*ef,tau0+0.8*dt0*et); p3=(f0-0.5*df0*ef+0.35*df0*nf,tau0-0.5*dt0*et+0.35*dt0*nt)
+    w1=(2*pi*p1[0]-1j/p1[1])/c_cgs; w2=(2*pi*p2[0]-1j/p2[1])/c_cgs; w3=(2*pi*p3[0]-1j/p3[1])/c_cgs
+    return (w1,w2,w3),(f0,tau0),(p1,p2,p3)

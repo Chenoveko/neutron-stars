@@ -1,4 +1,4 @@
-from numpy import pi, exp, sin, cos
+from numpy import pi, exp, sin, cos,atan
 from typing import Callable
 
 
@@ -125,26 +125,24 @@ def regge_wheeler_out(t: float, var, omega: complex, alpha: float, M: float, R: 
     :param l: angular momentum number
     :return: derivatives [Re(dg/dt), Im(dg/dt)]
     """
-    if alpha_condition(omega, alpha):
-        # Unpack variables
-        g_re, g_im = var
-        # Reconstruct complex variable
-        g = g_re + 1j * g_im
-        # CES parametrization
-        r = compact_rot_coord(t, R, alpha)
-        # Metric functions
-        f = 1.0 - 2.0 * M / r
-        f_prime = 2.0 * M / r**2
-        # Potential
-        v = axial_potential_out(r, M, l)
-        # Derivatives
-        drdt = -exp(1j * alpha) / t ** 2
-        dgdr = -g ** 2 - (f_prime / f) * g - (omega ** 2 - v) / f ** 2
-        dgdt = drdt * dgdr
-        return dgdt.real, dgdt.imag
-    else:
-        raise ValueError("Alpha condition for CES is not met")
-
+    # Fix alpha if not met condition
+    alpha = fix_alpha(omega, alpha)
+    # Unpack variables
+    g_re, g_im = var
+    # Reconstruct complex variable
+    g = g_re + 1j * g_im
+    # CES parametrization
+    r = compact_rot_coord(t, R, alpha)
+    # Metric functions
+    f = 1.0 - 2.0 * M / r
+    f_prime = 2.0 * M / r**2
+    # Potential
+    v = axial_potential_out(r, M, l)
+    # Derivatives
+    drdt = -exp(1j * alpha) / t ** 2
+    dgdr = -g ** 2 - (f_prime / f) * g - (omega ** 2 - v) / f ** 2
+    dgdt = drdt * dgdr
+    return dgdt.real, dgdt.imag
 
 def alpha_condition(omega: complex, alpha: float) -> bool:
     """
@@ -154,7 +152,16 @@ def alpha_condition(omega: complex, alpha: float) -> bool:
     :param alpha: complex rotation angle
     :return: True if alpha condition is met, False otherwise
     """
-    if omega.imag * cos(alpha) - omega.real * sin(alpha) < 0:
-        return True
-    else:
-        return False
+    return omega.imag * cos(alpha) - omega.real * sin(alpha) < 0
+
+def fix_alpha(omega: complex, alpha: float) -> float:
+    """
+    Ensure alpha satisfies CES condition. If not, pick a random valid one.
+    :param omega: angular frequency value
+    :param alpha: complex rotation angle
+    :return: new alpha value
+    """
+    if alpha_condition(omega, alpha):
+        return alpha
+    print("Changing alpha value")
+    return atan(omega.imag / omega.real) + 1e-3

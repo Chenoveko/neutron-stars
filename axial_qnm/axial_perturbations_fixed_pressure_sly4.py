@@ -13,7 +13,7 @@ from scipy.interpolate import PchipInterpolator as pchip
 from equations_of_structure.interpol_data import rho_pchip_geo_sly4
 from solve_qnm import solve_qnm_inside, solve_qnm_outside, matching, muller_seed_meshgrid
 from tov_solvers import solve_tov_eos
-from utilities.physical_data import M_sun, mass_cgs_to_geo
+from utilities.physical_data import M_sun, mass_cgs_to_geo, pressure_geo_to_cgs
 from mullerpy import muller
 
 # ==========Log time start==========#
@@ -22,7 +22,7 @@ start = time.perf_counter()
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
 p_central_sly4_geo = 1.103445918598322e-14
 c_cgs = c_is * 100  # m/s → cm/s
-
+print(pressure_geo_to_cgs(p_central_sly4_geo))
 # Omega
 f = 8.034e3  # [Hz]
 tau = 29.31e-6  # [s]
