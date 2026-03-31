@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from mullerpy import muller
 # import matplotlib
 # matplotlib.use('TkAgg')
-from numpy import array, pi, meshgrid, linspace, log10, nanargmin, unravel_index, abs, concatenate, logspace
+from numpy import array, pi, meshgrid, linspace, log10, nanargmin, unravel_index, abs, concatenate, logspace, nan
 from scipy.constants import c as c_is
 from scipy.interpolate import PchipInterpolator as pchip
 
@@ -21,8 +21,8 @@ start = time.perf_counter()
 # ==========Parameters==========#
 M_sun_geo = mass_cgs_to_geo(M_sun)  # Solar mass in GEO units
 p_anchor = 1.335451562929903e+35 # anchor point at 1.4 solar masses for central pressure
-p_central_array_cgs_up = logspace(log10(p_anchor), 36.5, 30)  # Array of central pressure in CGS up
-p_central_array_cgs_down = logspace(log10(p_anchor), 34.0, 30)  # Array of central pressure in CGS down
+p_central_array_cgs_up = logspace(log10(p_anchor), 36.3, 50)  # Array of central pressure in CGS up
+p_central_array_cgs_down = logspace(log10(p_anchor), 34.8, 50)  # Array of central pressure in CGS down
 p_central_array_geo_up = pressure_cgs_to_geo(p_central_array_cgs_up)  # Array of central pressure in GEO up
 p_central_array_geo_down = pressure_cgs_to_geo(p_central_array_cgs_down)  # Array of central pressure in GEO down
 log10_p_central_array_cgs_up = log10(p_central_array_cgs_up)
@@ -183,8 +183,12 @@ for p_c in p_central_array_geo_up:
             local_refine=True,
             n_local=5,
         )
-
-        res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
+        try:
+            res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
+        except ValueError:
+            f_sly4_up.append(nan)
+            tau_sly4_up.append(nan)
+            continue
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
         print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
@@ -341,8 +345,12 @@ for p_c in p_central_array_geo_down:
             local_refine=True,
             n_local=5,
         )
-
-        res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
+        try:
+            res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
+        except ValueError:
+            f_sly4_down.append(nan)
+            tau_sly4_down.append(nan)
+            continue
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
         print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
