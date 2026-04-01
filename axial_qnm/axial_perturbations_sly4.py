@@ -73,7 +73,7 @@ for p_c in p_central_array_geo_up:
         idx = unravel_index(nanargmin(f_meshgrid_log10), f_meshgrid_log10.shape)
         f_best = F[idx] / 1e3
         tau_best = TAU[idx] * 1e6
-        print(f"Minimum at first iteration → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Minimum at first iteration SLy4 → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         # ================================
         # Heatmap 2D
         # ================================
@@ -109,7 +109,7 @@ for p_c in p_central_array_geo_up:
         res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
-        print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Müller SLy4 → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         f_sly4_up.append(f_muller)
         tau_sly4_up.append(tau_muller)
     elif it_up == 2:
@@ -131,7 +131,7 @@ for p_c in p_central_array_geo_up:
         idx = unravel_index(nanargmin(f_meshgrid_log10), f_meshgrid_log10.shape)
         f_best = F[idx] / 1e3
         tau_best = TAU[idx] * 1e6
-        print(f"Minimum at second iteration→ f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Minimum at second iteration SLy4 → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         # ================================
         # Heatmap 2D
         # ================================
@@ -191,7 +191,7 @@ for p_c in p_central_array_geo_up:
             continue
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
-        print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Müller SLy4 → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         f_sly4_up.append(f_muller)
         tau_sly4_up.append(tau_muller)
 
@@ -235,7 +235,7 @@ for p_c in p_central_array_geo_down:
         idx = unravel_index(nanargmin(f_meshgrid_log10), f_meshgrid_log10.shape)
         f_best = F[idx] / 1e3
         tau_best = TAU[idx] * 1e6
-        print(f"Minimum at first iteration → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Minimum at first iteration SLy4 → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         # ================================
         # Heatmap 2D
         # ================================
@@ -271,7 +271,7 @@ for p_c in p_central_array_geo_down:
         res = muller(f_match, (w1, w2, w3), xtol=1e-10, ftol=1e-10, maxiter=50)
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
-        print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Müller SLy4 → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         f_sly4_down.append(f_muller)
         tau_sly4_down.append(tau_muller)
     elif it_down == 2:
@@ -293,7 +293,7 @@ for p_c in p_central_array_geo_down:
         idx = unravel_index(nanargmin(f_meshgrid_log10), f_meshgrid_log10.shape)
         f_best = F[idx] / 1e3
         tau_best = TAU[idx] * 1e6
-        print(f"Minimum at second iteration→ f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Minimum at second iteration SLy4 → f = {f_best:.3f} KHz | τ = {tau_best:.3f} µs | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         # ================================
         # Heatmap 2D
         # ================================
@@ -353,7 +353,7 @@ for p_c in p_central_array_geo_down:
             continue
         f_muller = res.root.real / (2 * pi) * c_cgs / 1e3
         tau_muller = -1 / (res.root.imag * c_cgs) * 1e6
-        print(f"Müller → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
+        print(f"Müller SLy4 → f = {f_muller:.6f} kHz | τ = {tau_muller:.6f} µs | it = {res.iterations} | log10(p_c [cgs]) = {log10(pressure_geo_to_cgs(p_c)):.6f}")
         f_sly4_down.append(f_muller)
         tau_sly4_down.append(tau_muller)
 
