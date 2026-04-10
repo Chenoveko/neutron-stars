@@ -4,7 +4,29 @@
 from typing import Callable, Tuple
 from numpy import ndarray, array, pi, sqrt, isfinite, log
 from scipy.integrate import solve_ivp
-from physical_functions import tov_equations
+
+def tov_equations(var: ndarray, r: float, rho: float) -> tuple[float, float,float]:
+    """
+    Geometry inside the star in GEO units:
+        ds^2 = -e^{2nu(r)} dt^2 + e^{lambda(r)} dr^2 + r^2 (dtheta^2 + sin^2(theta) * dphi^2)
+    This gives TOV equations
+        dm/dr = 4*pi*r^2*rho(r)
+        dp/dr = - [rho(r) + p(r)] * [m(r) + 4*pi*r^3 p(r)] / [r^2 (1 - 2m(r)/r)]
+        dnu/dr = [m(r) + 4*pi*r^3 p(r)] / [r^2 (1 - 2m(r)/r)]
+    :param var: state variables
+    :param r: radial coordinate
+    :param rho: energy density
+    :return: derivatives
+    """
+    # Unpack variables
+    p, m ,nu= var[0], var[1],var[2]
+    # Enclosed mass equation
+    dm_dr = 4 * pi * r ** 2 * rho
+    # Metric function
+    dnu_dr = 2*(m + 4 * pi * r**3 * p) / (r * (r - 2 * m))
+    # Interior pressure equation
+    dp_dr = -(rho + p) * dnu_dr
+    return dp_dr, dm_dr, dnu_dr
 
 
 def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float = 20e5,
@@ -24,11 +46,13 @@ def solve_tov_eos(p_c: float, rho_func: Callable, r0: float = 1e-4, r_max: float
     """
     # Integrate until pressure has dropped by 20 orders of magnitude
     p_min = p_c * 1e-15
-    # Taylor expansion (order 3) near center to get initial conditions
+
+    # Taylor expansion
     rho_c = rho_func(p_c)
     p_r0 = p_c - (2 / 3) * pi * r0 ** 2 * (rho_c + p_c) * (rho_c + 3 * p_c)
     m_r0 = (4 / 3) * pi * rho_c * r0 ** 3
     nu_r0 = 0.0 + (4 / 3) * pi * r0 ** 2 * (rho_c + 3 * p_c)
+
     # Initial conditions
     init = array([p_r0, m_r0, nu_r0], float)
 

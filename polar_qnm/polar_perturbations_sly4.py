@@ -47,6 +47,14 @@ for p_c in p_central_array_geo_up:
     m_fun = pchip(r_sly4, m_sly4, extrapolate=False)
     nu_fun = pchip(r_sly4, nu_sly4, extrapolate=False)
     rho_fun = pchip(r_sly4, rho_sly4, extrapolate=False)
+    # Derivative drho/dp
+    drho_dp_fun = rho_pchip_geo_sly4.derivative()
+    # dp/d rho = 1 / (d rho / d p)
+    dp_drho_gamma = 1.0 / drho_dp_fun(p_sly4)
+    # Gamma1(r) = ((rho + p)/p) * (dp/d rho)
+    Gamma1_sly4 = ((rho_sly4 + p_sly4) / p_sly4) * dp_drho_gamma
+    # Interpolation -> Gamma1(r)
+    Gamma1_fun = pchip(r_gamma, Gamma1_sly4, extrapolate=False)
     # TOV parameters
     R = r_sly4[-1]
     M = m_sly4[-1]

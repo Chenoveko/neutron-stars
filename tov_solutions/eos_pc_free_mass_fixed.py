@@ -104,6 +104,7 @@ for p_c in p_central_array_gnh3_geo:
     if target_mass - mass_threshold <= tot_mass <= target_mass + mass_threshold:
         p_central_gnh3_geo = p_c
         print("central pressure in geo units for GNH3: ", p_central_gnh3_geo)
+        print("central pressure in CGS units for GNH3: ", pressure_geo_to_cgs(p_central_gnh3_geo))
         break
     else:
         continue
@@ -135,7 +136,6 @@ m_gnh3 = m_gnh3 / M_sun_geo  # Convert mass points
 
 # Integrate TOV equations using SLY4 EoS
 r_sly4, p_sly4, m_sly4, status_sly4l = solve_tov_eos(p_central_sly4_geo, rho_pchip_geo_sly4)
-print(r_sly4[-1], m_sly4[-1])
 r_sly4 = r_sly4 / 1e5  # Convert radial points to Km
 p_sly4 = pressure_geo_to_cgs(p_sly4)  # Convert pressure to CGS
 m_sly4 = m_sly4 / M_sun_geo  # Convert mass points

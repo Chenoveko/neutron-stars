@@ -137,10 +137,8 @@ def regge_wheeler_out(t: float, var, omega: complex, alpha: float, M: float, R: 
         f_prime = 2.0 * M / r ** 2
         # Potential
         v = axial_potential_out(r, M, l)
-        # Derivatives
-        drdt = -exp(1j * alpha) / t ** 2
-        dgdr = -g ** 2 - (f_prime / f) * g - (omega ** 2 - v) / f ** 2
-        dgdt = drdt * dgdr
+        # Derivatives dgdt = drdt * dgdr
+        dgdt = (-exp(1j * alpha) / t ** 2) * (-g ** 2 - (f_prime / f) * g - (omega ** 2 - v) / f ** 2)
         return dgdt.real, dgdt.imag
     else:
         raise ValueError("Alpha condition for CES is not met")
